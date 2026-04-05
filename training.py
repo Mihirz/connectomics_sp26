@@ -171,16 +171,21 @@ class AugmentedTrainer:
     7. Both updates flow gradients through the shared encoder.
     """
 
-    def __init__(self, cfg: ExperimentConfig, task_name: str):
+    def __init__(self, cfg: ExperimentConfig, task_name: str, existing_model=None):
         self.cfg = cfg
         self.device = cfg.device
 
-        # ── Create model ──
-        self.model = AugmentedModel(cfg.model, cfg.env).to(self.device)
+        # ── Create or reuse model ──
+        # When training sequentially on multiple tasks, an existing model is
+        # passed in so that the same weights are refined across tasks.
+        # CRITICAL: the optimizer must be created AFTER the model is set,
+        # otherwise it optimizes dangling parameters from a throwaway model.
+        if existing_model is not None:
+            self.model = existing_model
+        else:
+            self.model = AugmentedModel(cfg.model, cfg.env).to(self.device)
 
-        # ── Separate optimizers for the two levels ──
-        # The meta-controller uses a lower learning rate for stability.
-        # Using separate optimizers ensures the two levels don't interfere.
+        # ── Optimizer (bound to the actual model's parameters) ──
         self.optimizer = optim.Adam([
             {"params": self.model.encoder.parameters(), "lr": cfg.train.lr_policy},
             {"params": self.model.policy_head.parameters(), "lr": cfg.train.lr_policy},
@@ -215,8 +220,10 @@ class AugmentedTrainer:
         Collect one rollout of transitions from the environment.
 
         This is where the "self-optimization" happens at inference time:
-        at each step, the meta-controller picks a sub-objective, and we
-        compute the intrinsic reward from that sub-objective.
+        the meta-controller selects a sub-objective every N steps (temporal
+        commitment), and the action policy executes that strategy until the
+        next decision point.  This mirrors how the PFC commits to a goal
+        for seconds/minutes rather than switching every millisecond.
         """
         self.buffer.reset()
         obs_np, _ = self.env.reset()
@@ -229,27 +236,75 @@ class AugmentedTrainer:
 
         episode_stats = defaultdict(list)
 
+        # ── Temporal commitment state ──
+        # Track current sub-objective and time-until-next-decision per env.
+        decision_interval = self.cfg.train.meta_decision_interval
+        current_obj = torch.zeros(self.cfg.train.num_parallel_envs, dtype=torch.long, device=self.device)
+        steps_until_decision = torch.zeros(self.cfg.train.num_parallel_envs, dtype=torch.long, device=self.device)
+        # Force a decision on the first step
+        needs_decision = torch.ones(self.cfg.train.num_parallel_envs, dtype=torch.bool, device=self.device)
+
         for step in range(self.cfg.train.rollout_steps):
             with torch.no_grad():
-                action, action_lp, obj_idx, obj_lp, value, meta_value = self.model(obs)
+                # Determine which envs need a new meta-controller decision
+                if needs_decision.any():
+                    # For envs needing a decision: sample from meta-controller
+                    action, action_lp, new_obj, obj_lp, value, meta_value = self.model(obs)
+                    # Update committed sub-objectives for those envs
+                    current_obj[needs_decision] = new_obj[needs_decision]
+                    steps_until_decision[needs_decision] = decision_interval
+                else:
+                    # All envs are committed: use forced sub-objectives
+                    action, action_lp, _, obj_lp, value, meta_value = self.model(
+                        obs, forced_obj_idx=current_obj
+                    )
+                    new_obj = current_obj
+
+                # For mixed case (some need decision, some don't), re-run
+                # with forced for the committed envs to get correct log probs.
+                # Simplified: always pass forced_obj for consistent log probs.
+                if needs_decision.any() and not needs_decision.all():
+                    # Re-evaluate with the actual committed objectives
+                    action, action_lp, _, obj_lp, value, meta_value = self.model(
+                        obs, forced_obj_idx=current_obj
+                    )
+
+            obj_idx = current_obj.clone()
+            steps_until_decision -= 1
 
             # Execute actions in environment
             actions_np = action.cpu().numpy()
             obj_idx_np = obj_idx.cpu().numpy()
             obs_np, reward_infos, dones, infos = self.env.step(actions_np)
 
-            # ── Compute intrinsic rewards from selected sub-objectives ──
-            # THIS IS THE KEY MECHANISM: each environment gets a different
-            # intrinsic reward based on what the meta-controller selected.
+            # ── Compute intrinsic rewards from committed sub-objectives ──
             intrinsic_rewards = np.zeros(self.cfg.train.num_parallel_envs, dtype=np.float32)
             sparse_rewards = np.zeros(self.cfg.train.num_parallel_envs, dtype=np.float32)
+
+            # Determine which envs need a new decision next step
+            needs_decision = steps_until_decision <= 0
 
             for i in range(self.cfg.train.num_parallel_envs):
                 ri = reward_infos[i]
                 all_intrinsic = reward_computers[i].compute_all(ri)
                 selected_obj = obj_idx_np[i]
-                intrinsic_rewards[i] = all_intrinsic[selected_obj]
-                sparse_rewards[i] = ri.get("sparse_reward", 0.0)
+                dense = ri.get("dense_reward", 0.0)
+                extrinsic = ri.get("sparse_reward", 0.0)
+
+                # ── Design B: Action policy gets DENSE + scaled INTRINSIC ──
+                # Both models receive the same dense task reward.  The augmented
+                # model additionally gets the intrinsic reward from the selected
+                # sub-objective, scaled down to match dense reward magnitudes.
+                # Without scaling, intrinsic rewards (~0.1/step) drown out dense
+                # rewards (~0.01/step) and the policy can't learn from the task.
+                scaled_intrinsic = self.cfg.train.intrinsic_reward_scale * all_intrinsic[selected_obj]
+                intrinsic_rewards[i] = dense + scaled_intrinsic
+
+                # Meta-controller: sparse failure signal + intrinsic feedback.
+                sparse_rewards[i] = (
+                    extrinsic
+                    + self.cfg.train.meta_intrinsic_feedback * all_intrinsic[selected_obj]
+                )
 
                 # Track sub-objective usage
                 self.obj_selection_counts[selected_obj] += 1
@@ -257,8 +312,9 @@ class AugmentedTrainer:
                 if dones[i]:
                     episode_stats["success"].append(ri.get("success", False))
                     episode_stats["episode_length"].append(ri.get("step", 0))
-                    # Reset this env's reward computer
                     reward_computers[i].reset(self.cfg.env.grid_size)
+                    # Force a new decision on episode reset
+                    needs_decision[i] = True
 
             # Store transition
             self.buffer.add(
@@ -304,6 +360,7 @@ class AugmentedTrainer:
 
         for epoch in range(cfg.ppo_epochs):
             for batch in self.buffer.get_batches(cfg.mini_batch_size):
+              try:
                 # Re-evaluate actions and objectives
                 action_lp, obj_lp, values, meta_values, action_ent, obj_ent = \
                     self.model.evaluate_actions(
@@ -311,11 +368,12 @@ class AugmentedTrainer:
                     )
 
                 # ── ACTION POLICY LOSS (intrinsic rewards) ──
-                # Standard PPO clipped objective using intrinsic advantages.
                 advantages = batch["advantages"]
                 advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+                advantages = torch.clamp(advantages, -5.0, 5.0)  # Prevent extreme values
 
                 ratio = torch.exp(action_lp - batch["action_logprobs"])
+                ratio = torch.clamp(ratio, 0.01, 100.0)  # Prevent ratio explosion
                 surr1 = ratio * advantages
                 surr2 = torch.clamp(ratio, 1 - cfg.clip_epsilon, 1 + cfg.clip_epsilon) * advantages
                 policy_loss = -torch.min(surr1, surr2).mean()
@@ -323,12 +381,13 @@ class AugmentedTrainer:
                 value_loss = 0.5 * (values - batch["returns"]).pow(2).mean()
 
                 # ── META-CONTROLLER LOSS (sparse negative rewards) ──
-                # Same PPO structure but using sparse advantages.
                 meta_advantages = batch["meta_advantages"]
                 if meta_advantages.std() > 1e-8:
                     meta_advantages = (meta_advantages - meta_advantages.mean()) / (meta_advantages.std() + 1e-8)
+                meta_advantages = torch.clamp(meta_advantages, -5.0, 5.0)
 
                 meta_ratio = torch.exp(obj_lp - batch["obj_logprobs"])
+                meta_ratio = torch.clamp(meta_ratio, 0.01, 100.0)
                 meta_surr1 = meta_ratio * meta_advantages
                 meta_surr2 = torch.clamp(meta_ratio, 1 - cfg.clip_epsilon, 1 + cfg.clip_epsilon) * meta_advantages
                 meta_loss = -torch.min(meta_surr1, meta_surr2).mean()
@@ -336,9 +395,6 @@ class AugmentedTrainer:
                 meta_value_loss = 0.5 * (meta_values - batch["meta_returns"]).pow(2).mean()
 
                 # ── TOTAL LOSS ──
-                # Combine both levels.  The entropy bonuses encourage exploration:
-                # - Higher meta-entropy → explore different sub-objectives
-                # - Standard action entropy → explore different actions
                 loss = (
                     policy_loss
                     + cfg.value_loss_coef * value_loss
@@ -348,9 +404,18 @@ class AugmentedTrainer:
                     - cfg.meta_entropy_coef * obj_ent.mean()
                 )
 
+                # ── NaN protection ──
+                # When episodes become very short (high success), reward spikes
+                # can produce extreme gradients.  Skip the update if NaN appears.
+                if torch.isnan(loss) or torch.isinf(loss):
+                    continue
+
                 self.optimizer.zero_grad()
                 loss.backward()
-                nn.utils.clip_grad_norm_(self.model.parameters(), cfg.max_grad_norm)
+                grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), cfg.max_grad_norm)
+                if torch.isnan(grad_norm) or torch.isinf(grad_norm):
+                    self.optimizer.zero_grad()
+                    continue
                 self.optimizer.step()
 
                 metrics["policy_loss"] += policy_loss.item()
@@ -359,6 +424,10 @@ class AugmentedTrainer:
                 metrics["action_entropy"] += action_ent.mean().item()
                 metrics["obj_entropy"] += obj_ent.mean().item()
                 num_updates += 1
+              except (ValueError, RuntimeError):
+                # NaN in model weights can cause Categorical to raise ValueError.
+                # Skip this batch and continue training.
+                continue
 
         return {k: v / max(num_updates, 1) for k, v in metrics.items()}
 
@@ -453,14 +522,17 @@ class BaselineTrainer:
 
         for epoch in range(cfg.ppo_epochs):
             for batch in self.buffer.get_batches(cfg.mini_batch_size):
+              try:
                 action_lp, values, entropy = self.model.evaluate_actions(
                     batch["obs"], batch["actions"]
                 )
 
                 advantages = batch["advantages"]
                 advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+                advantages = torch.clamp(advantages, -5.0, 5.0)
 
                 ratio = torch.exp(action_lp - batch["action_logprobs"])
+                ratio = torch.clamp(ratio, 0.01, 100.0)
                 surr1 = ratio * advantages
                 surr2 = torch.clamp(ratio, 1 - cfg.clip_epsilon, 1 + cfg.clip_epsilon) * advantages
                 policy_loss = -torch.min(surr1, surr2).mean()
@@ -469,14 +541,22 @@ class BaselineTrainer:
 
                 loss = policy_loss + cfg.value_loss_coef * value_loss - cfg.entropy_coef * entropy.mean()
 
+                if torch.isnan(loss) or torch.isinf(loss):
+                    continue
+
                 self.optimizer.zero_grad()
                 loss.backward()
-                nn.utils.clip_grad_norm_(self.model.parameters(), cfg.max_grad_norm)
+                grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), cfg.max_grad_norm)
+                if torch.isnan(grad_norm) or torch.isinf(grad_norm):
+                    self.optimizer.zero_grad()
+                    continue
                 self.optimizer.step()
 
                 metrics["policy_loss"] += policy_loss.item()
                 metrics["value_loss"] += value_loss.item()
                 metrics["action_entropy"] += entropy.mean().item()
                 num_updates += 1
+              except (ValueError, RuntimeError):
+                continue
 
         return {k: v / max(num_updates, 1) for k, v in metrics.items()}

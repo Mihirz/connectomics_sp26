@@ -1,0 +1,210 @@
+{
+  "multitask": {
+    "augmented": {
+      "morris_water_maze": {
+        "success_rate": 0.2,
+        "avg_episode_length": 241.54,
+        "avg_reward": -2.213399999999984,
+        "std_reward": 1.5732737968961332,
+        "strategy_entropy": -0.0,
+        "strategy_distribution": {
+          "EXPLORE": 0.0,
+          "APPROACH": 1.0,
+          "AVOID": 0.0,
+          "EXPLOIT": 0.0,
+          "MEMORIZE": 0.0
+        }
+      },
+      "visual_foraging": {
+        "success_rate": 0.0,
+        "avg_episode_length": 88.42,
+        "avg_reward": -1.6461999999999997,
+        "std_reward": 0.633346319165114,
+        "strategy_entropy": -0.0,
+        "strategy_distribution": {
+          "EXPLORE": 0.0,
+          "APPROACH": 1.0,
+          "AVOID": 0.0,
+          "EXPLOIT": 0.0,
+          "MEMORIZE": 0.0
+        }
+      },
+      "dynamic_obstacles": {
+        "success_rate": 0.0,
+        "avg_episode_length": 28.2,
+        "avg_reward": -0.772,
+        "std_reward": 0.20071870864471014,
+        "strategy_entropy": -0.0,
+        "strategy_distribution": {
+          "EXPLORE": 0.0,
+          "APPROACH": 1.0,
+          "AVOID": 0.0,
+          "EXPLOIT": 0.0,
+          "MEMORIZE": 0.0
+        }
+      },
+      "visual_search": {
+        "success_rate": 0.0,
+        "avg_episode_length": 300.0,
+        "avg_reward": -2.9999999999999796,
+        "std_reward": 4.440892098500626e-16,
+        "strategy_entropy": -0.0,
+        "strategy_distribution": {
+          "EXPLORE": 0.0,
+          "APPROACH": 1.0,
+          "AVOID": 0.0,
+          "EXPLOIT": 0.0,
+          "MEMORIZE": 0.0
+        }
+      }
+    },
+    "baseline": {
+      "morris_water_maze": {
+        "success_rate": 0.92,
+        "avg_episode_length": 33.82,
+        "avg_reward": 0.5910000000000016,
+        "std_reward": 1.0598174371088582
+      },
+      "visual_foraging": {
+        "success_rate": 0.0,
+        "avg_episode_length": 77.84,
+        "avg_reward": -1.5243999999999993,
+        "std_reward": 0.5954936103771373
+      },
+      "dynamic_obstacles": {
+        "success_rate": 0.0,
+        "avg_episode_length": 10.64,
+        "avg_reward": -0.5964,
+        "std_reward": 0.058129510577674744
+      },
+      "visual_search": {
+        "success_rate": 0.08,
+        "avg_episode_length": 277.08,
+        "avg_reward": -2.6899999999999813,
+        "std_reward": 1.0513381948735567
+      }
+    },
+    "augmented_avg_success": 0.05,
+    "baseline_avg_success": 0.25,
+    "generalizability_delta": -0.2
+  },
+  "zero_shot_transfer": {
+    "augmented": {
+      "morris_water_maze": {
+        "mean_success": 0.18000000000000002,
+        "std_success": 0.025298221281347028
+      },
+      "visual_foraging": {
+        "mean_success": 0.004,
+        "std_success": 0.008
+      },
+      "dynamic_obstacles": {
+        "mean_success": 0.0,
+        "std_success": 0.0
+      },
+      "visual_search": {
+        "mean_success": 0.068,
+        "std_success": 0.02039607805437114
+      }
+    },
+    "baseline": {
+      "morris_water_maze": {
+        "mean_success": 0.968,
+        "std_success": 0.02039607805437116
+      },
+      "visual_foraging": {
+        "mean_success": 0.0,
+        "std_success": 0.0
+      },
+      "dynamic_obstacles": {
+        "mean_success": 0.0,
+        "std_success": 0.0
+      },
+      "visual_search": {
+        "mean_success": 0.055999999999999994,
+        "std_success": 0.014966629547095765
+      }
+    }
+  },
+  "few_shot_adaptation": {
+    "augmented": {
+      "episodes_to_threshold": 200,
+      "final_success_rate": 0.1,
+      "reached_threshold": false
+    },
+    "baseline": {
+      "episodes_to_threshold": 20,
+      "final_success_rate": 1.0,
+      "reached_threshold": true
+    }
+  },
+  "catastrophic_forgetting": {
+    "morris_water_maze": {
+      "before": 0.9,
+      "after": 0.18,
+      "forgetting": 0.72
+    },
+    "visual_foraging": {
+      "before": 0.0,
+      "after": 0.0,
+      "forgetting": 0
+    },
+    "dynamic_obstacles": {
+      "before": 0.02,
+      "after": 0.0,
+      "forgetting": 0.02
+    },
+    "visual_search": {
+      "before": 0.04,
+      "after": 0.12,
+      "forgetting": 0
+    },
+    "avg_forgetting": 0.185
+  },
+  "strategy_diversity": {
+    "morris_water_maze": {
+      "strategy_entropy": -0.0,
+      "strategy_distribution": {
+        "EXPLORE": 0.0,
+        "APPROACH": 1.0,
+        "AVOID": 0.0,
+        "EXPLOIT": 0.0,
+        "MEMORIZE": 0.0
+      },
+      "success_rate": 0.22
+    },
+    "visual_foraging": {
+      "strategy_entropy": -0.0,
+      "strategy_distribution": {
+        "EXPLORE": 0.0,
+        "APPROACH": 1.0,
+        "AVOID": 0.0,
+        "EXPLOIT": 0.0,
+        "MEMORIZE": 0.0
+      },
+      "success_rate": 0.0
+    },
+    "dynamic_obstacles": {
+      "strategy_entropy": -0.0,
+      "strategy_distribution": {
+        "EXPLORE": 0.0,
+        "APPROACH": 1.0,
+        "AVOID": 0.0,
+        "EXPLOIT": 0.0,
+        "MEMORIZE": 0.0
+      },
+      "success_rate": 0.0
+    },
+    "visual_search": {
+      "strategy_entropy": -0.0,
+      "strategy_distribution": {
+        "EXPLORE": 0.0,
+        "APPROACH": 1.0,
+        "AVOID": 0.0,
+        "EXPLOIT": 0.0,
+        "MEMORIZE": 0.0
+      },
+      "success_rate": 0.02
+    }
+  }
+}

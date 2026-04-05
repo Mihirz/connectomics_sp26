@@ -146,6 +146,7 @@ class MorrisWaterMaze(BaseGridEnv):
 
         self.platform_pos = None
         self.found_platform = False
+        self.min_dist_to_platform = float("inf")
 
     def _is_passable(self, pos: np.ndarray) -> bool:
         """Agent can only move within the circular pool."""
@@ -155,6 +156,7 @@ class MorrisWaterMaze(BaseGridEnv):
         self.step_count = 0
         self.done = False
         self.found_platform = False
+        self.min_dist_to_platform = float("inf")
         self.visit_counts = np.zeros((self.size, self.size), dtype=np.float32)
 
         # Place platform at a random position inside the pool
@@ -191,9 +193,18 @@ class MorrisWaterMaze(BaseGridEnv):
 
         reward_info = self._compute_reward_info(action, old_pos)
 
+        # Track closest approach for distance-scaled failure penalty
+        self.min_dist_to_platform = min(self.min_dist_to_platform, reward_info["dist_to_goal"])
+
         if self.step_count >= self.max_steps:
             self.done = True
-            reward_info["sparse_reward"] = self.cfg.max_steps_per_episode * -0.005  # failure penalty scaled
+            # Scale penalty by how close the agent got during the episode.
+            # An agent that nearly found the platform gets a milder penalty (-0.3)
+            # than one that stayed far away (-1.0).  This gives the meta-controller
+            # a gradient: sub-objectives that move toward the platform produce
+            # less negative outcomes, even when the episode times out.
+            closeness = 1.0 - min(self.min_dist_to_platform / (self.pool_radius * 2), 1.0)
+            reward_info["sparse_reward"] = -1.0 + closeness * 0.7  # range: -1.0 to -0.3
             reward_info["timeout"] = True
 
         return self._render(), reward_info, self.done, {"task": "morris_water_maze"}
@@ -249,10 +260,53 @@ class MorrisWaterMaze(BaseGridEnv):
         for c in range(3):
             img[c][self.pool_mask] = COLORS["water"][c]
 
+        # ── Proximity gradient (warmth near the platform) ──
+        # This gives the CNN a learnable signal without directly revealing the
+        # platform location.  Analogous to water temperature gradients that
+        # some aquatic animals can sense.  Visible within 70% of pool radius,
+        # strong enough for the CNN to detect from several cells away.
+        if self.platform_pos is not None:
+            yy, xx = np.mgrid[0:self.size, 0:self.size]
+            dist_to_plat = np.sqrt((yy - self.platform_pos[0])**2 +
+                                   (xx - self.platform_pos[1])**2)
+            gradient_radius = self.pool_radius * 0.7
+            gradient_mask = (dist_to_plat < gradient_radius) & self.pool_mask
+            warmth = 1.0 - (dist_to_plat[gradient_mask] / gradient_radius)
+            warmth = warmth * 0.3  # 30% max color shift — clearly detectable
+            img[0][gradient_mask] += warmth       # Red/warm tint increases
+            img[2][gradient_mask] -= warmth * 0.5  # Blue decreases
+
+        # ── Landmark cues (4 colored markers at pool edges) ──
+        # In the real Morris water maze, visual cues on the room walls provide
+        # allocentric spatial reference.  We place 4 distinct colored markers
+        # at the N/S/E/W extremes of the pool boundary.
+        cx, cy = int(self.pool_center[0]), int(self.pool_center[1])
+        pr = int(self.pool_radius)
+        landmark_colors = [
+            np.array([0.9, 0.2, 0.2]),   # North — red
+            np.array([0.2, 0.2, 0.9]),   # South — blue
+            np.array([0.9, 0.9, 0.2]),   # East — yellow
+            np.array([0.2, 0.9, 0.9]),   # West — cyan
+        ]
+        landmark_positions = [
+            (cx - pr, cy),     # North
+            (cx + pr, cy),     # South
+            (cx, cy + pr),     # East
+            (cx, cy - pr),     # West
+        ]
+        for (lr, lc), color in zip(landmark_positions, landmark_colors):
+            for dr in range(-1, 2):
+                for dc in range(-1, 2):
+                    r, c_idx = lr + dr, lc + dc
+                    if 0 <= r < self.size and 0 <= c_idx < self.size:
+                        for c in range(3):
+                            img[c, r, c_idx] = color[c]
+
         # Visited cells (subtle shading to help the model track its own path)
         visited_mask = (self.visit_counts > 0) & self.pool_mask
         for c in range(3):
-            img[c][visited_mask] = COLORS["visited"][c]
+            img[c][visited_mask] = np.maximum(img[c][visited_mask],
+                                               COLORS["visited"][c])
 
         # Platform — HIDDEN unless agent is on it
         if self.found_platform:
@@ -381,7 +435,8 @@ class VisualForaging(BaseGridEnv):
         if predator_caught or self.collected >= self.collect_target or self.step_count >= self.max_steps:
             self.done = True
             if self.step_count >= self.max_steps and self.collected < self.collect_target:
-                reward_info["sparse_reward"] = -1.0
+                progress = self.collected / max(self.collect_target, 1)
+                reward_info["sparse_reward"] = -1.0 + progress * 0.7
                 reward_info["timeout"] = True
             if predator_caught:
                 reward_info["sparse_reward"] = -1.0
@@ -551,7 +606,8 @@ class DynamicObstacleCourse(BaseGridEnv):
             if collision:
                 reward_info["sparse_reward"] = -1.0
             if self.step_count >= self.max_steps and not reached_goal:
-                reward_info["sparse_reward"] = -1.0
+                closeness = 1.0 - min(reward_info["dist_to_goal"] / (self.size * 1.4), 1.0)
+                reward_info["sparse_reward"] = -1.0 + closeness * 0.7
                 reward_info["timeout"] = True
 
         return self._render(), reward_info, self.done, {"task": "dynamic_obstacles"}
@@ -700,7 +756,8 @@ class VisualSearchWithCues(BaseGridEnv):
         if found_target or self.step_count >= self.max_steps:
             self.done = True
             if self.step_count >= self.max_steps and not found_target:
-                reward_info["sparse_reward"] = -1.0
+                closeness = 1.0 - min(reward_info["dist_to_goal"] / (self.size * 1.4), 1.0)
+                reward_info["sparse_reward"] = -1.0 + closeness * 0.7
                 reward_info["timeout"] = True
 
         return self._render(), reward_info, self.done, {"task": "visual_search"}

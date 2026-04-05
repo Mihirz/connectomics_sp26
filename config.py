@@ -17,16 +17,17 @@ from typing import List
 
 @dataclass
 class EnvConfig:
-    grid_size: int = 32            # NxN grid world
+    grid_size: int = 20            # NxN grid world (20 keeps exploration tractable)
     obs_channels: int = 3          # RGB observation
-    max_steps_per_episode: int = 200  # Episode timeout (negative signal trigger)
+    max_steps_per_episode: int = 300  # Episode timeout (negative signal trigger)
     num_actions: int = 5           # up, down, left, right, stay
 
     # ── Morris Water Maze ──
     # The agent is placed at a random edge of a circular "pool" and must find
-    # a hidden platform.  The platform is invisible until the agent steps on it.
+    # a hidden platform.  Landmark cues on the pool walls provide spatial
+    # reference (matching the real experiment protocol).
     mwm_pool_radius: float = 0.45  # Fraction of grid_size
-    mwm_platform_radius: float = 0.06
+    mwm_platform_radius: float = 0.15  # Larger platform for learnable signal
 
     # ── Visual Foraging ──
     # Collect food items while avoiding moving predator zones.
@@ -84,7 +85,7 @@ class TrainConfig:
     # We use Proximal Policy Optimization for both models because it is stable,
     # sample-efficient, and well-understood.
     lr_policy: float = 3e-4             # Learning rate for action policy
-    lr_meta: float = 1e-4              # Learning rate for meta-controller (lower = more stable selection)
+    lr_meta: float = 3e-4              # Learning rate for meta-controller
     gamma: float = 0.99                 # Discount factor
     gae_lambda: float = 0.95           # GAE parameter
     clip_epsilon: float = 0.2          # PPO clipping
@@ -92,6 +93,14 @@ class TrainConfig:
     meta_entropy_coef: float = 0.05    # Higher entropy for meta-controller (encourage exploration of strategies)
     value_loss_coef: float = 0.5
     max_grad_norm: float = 0.5
+
+    # ── Meta-controller temporal commitment ──
+    # The meta-controller selects a sub-objective every N steps, not every step.
+    # Between selections, the same sub-objective is held constant.  This gives
+    # the action policy time to execute a coherent strategy and reduces the
+    # meta-controller's credit assignment from ~300 decisions to ~20 per episode.
+    # Biologically: PFC executive control operates on seconds, not milliseconds.
+    meta_decision_interval: int = 15   # Steps between meta-controller decisions
 
     # ── Rollout settings ──
     # These are deliberately small to fit in ≤ 8 GB VRAM.
@@ -105,15 +114,33 @@ class TrainConfig:
     eval_interval: int = 250           # Evaluate every N episodes
     num_eval_episodes: int = 50        # Episodes per evaluation
 
-    # ── Sparse negative reward (augmented model) ──
-    # The ONLY extrinsic signal the augmented model receives.
-    # This is the "broad goal violation" punishment.
+    # ── Reward design (Design B) ──
+    # Both models receive the same dense task reward.  The augmented model
+    # additionally gets intrinsic reward from the meta-controller's selected
+    # sub-objective.  This mirrors the biology: the PFC supplements standard
+    # reward processing with top-down strategy modulation.
+    #
+    # The meta-controller receives ONLY sparse negative punishment + intrinsic
+    # feedback (no dense reward).  It must learn which sub-objectives are
+    # productive purely from whether they avoid failure and generate useful
+    # intrinsic signals.
     failure_penalty: float = -1.0      # Given on episode timeout or catastrophic failure
-    success_signal: float = 0.0        # Intentionally zero: no positive extrinsic reward!
-    # Note: setting success_signal=0 is the key design choice.  The augmented
-    # model must learn to succeed purely from intrinsic sub-objective rewards,
-    # guided only by the absence of punishment.  This forces the meta-controller
-    # to discover which sub-objectives lead to avoiding failure.
+    success_signal: float = 0.0        # No positive sparse signal (meta-controller)
+
+    # ── Meta-controller intrinsic feedback ──
+    # The meta-controller also receives a fraction of the selected sub-objective's
+    # intrinsic reward as a per-step signal.  This is biologically plausible:
+    # the PFC receives dopaminergic feedback about whether its currently selected
+    # drive is "producing results," not just end-of-episode punishment.
+    # Without this, credit assignment over 300 timesteps is nearly impossible.
+    meta_intrinsic_feedback: float = 0.2  # Fraction of intrinsic reward fed to meta
+
+    # ── Intrinsic reward scaling ──
+    # Intrinsic rewards must be comparable in magnitude to dense rewards
+    # (~0.01/step) to supplement rather than dominate the task signal.
+    # Without scaling, intrinsic rewards are ~10x larger than dense,
+    # drowning out the task gradient.
+    intrinsic_reward_scale: float = 0.1  # Scale intrinsic rewards down by 10x
 
     # ── Dense reward (baseline model) ──
     # Standard dense reward shaping for comparison.

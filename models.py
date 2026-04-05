@@ -22,7 +22,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Optional
 from config import ModelConfig, EnvConfig
 
 
@@ -51,7 +51,7 @@ class CNNEncoder(nn.Module):
         Flatten → (256,)
     """
 
-    def __init__(self, cfg: ModelConfig, obs_channels: int = 3):
+    def __init__(self, cfg: ModelConfig, obs_channels: int = 3, grid_size: int = 20):
         super().__init__()
         channels = [obs_channels] + cfg.encoder_channels
 
@@ -64,9 +64,9 @@ class CNNEncoder(nn.Module):
 
         self.conv = nn.Sequential(*layers)
 
-        # Compute output size dynamically
+        # Compute output size dynamically using actual grid dimensions
         with torch.no_grad():
-            dummy = torch.zeros(1, obs_channels, 32, 32)
+            dummy = torch.zeros(1, obs_channels, grid_size, grid_size)
             conv_out = self.conv(dummy)
             self.flat_size = conv_out.view(1, -1).shape[1]
 
@@ -76,7 +76,7 @@ class CNNEncoder(nn.Module):
     def forward(self, obs: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            obs: (batch, 3, 32, 32) float tensor
+            obs: (batch, C, H, W) float tensor
         Returns:
             (batch, latent_dim) latent state
         """
@@ -157,7 +157,7 @@ class AugmentedModel(nn.Module):
     def __init__(self, model_cfg: ModelConfig, env_cfg: EnvConfig):
         super().__init__()
 
-        self.encoder = CNNEncoder(model_cfg, env_cfg.obs_channels)
+        self.encoder = CNNEncoder(model_cfg, env_cfg.obs_channels, env_cfg.grid_size)
 
         # ── Meta-controller (PFC) ──
         self.meta_controller = MetaController(
@@ -198,9 +198,18 @@ class AugmentedModel(nn.Module):
         self,
         obs: torch.Tensor,
         deterministic: bool = False,
+        forced_obj_idx: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Full forward pass.
+
+        Args:
+            obs:             (batch, C, H, W) observation
+            deterministic:   if True, use argmax instead of sampling
+            forced_obj_idx:  (batch,) if provided, use this sub-objective instead
+                             of sampling from the meta-controller.  The meta-controller
+                             still computes log probs for the forced selection (needed
+                             for PPO ratio computation).
 
         Returns:
             action:         (batch,) selected actions
@@ -213,9 +222,12 @@ class AugmentedModel(nn.Module):
         # Step 1: Encode observation
         latent = self.encoder(obs)
 
-        # Step 2: Meta-controller selects sub-objective
+        # Step 2: Meta-controller computes distribution over sub-objectives
         obj_dist = self.meta_controller(latent)
-        if deterministic:
+        if forced_obj_idx is not None:
+            # Use the forced sub-objective (temporal commitment)
+            obj_idx = forced_obj_idx
+        elif deterministic:
             obj_idx = obj_dist.probs.argmax(dim=-1)
         else:
             obj_idx = obj_dist.sample()
@@ -298,26 +310,23 @@ class BaselineModel(nn.Module):
     def __init__(self, model_cfg: ModelConfig, env_cfg: EnvConfig):
         super().__init__()
 
-        self.encoder = CNNEncoder(model_cfg, env_cfg.obs_channels)
+        self.encoder = CNNEncoder(model_cfg, env_cfg.obs_channels, env_cfg.grid_size)
 
-        # Slightly wider heads to match augmented model's parameter count
-        # (compensating for the missing meta-controller and embeddings)
-        wider_hidden = model_cfg.hidden_dim + model_cfg.meta_hidden_dim
+        # 2-layer heads (same depth as augmented model's heads) with a wider
+        # hidden dim to compensate for the missing meta-controller, embeddings,
+        # and meta-value head.  Target: roughly match augmented param count.
+        wider_hidden = model_cfg.hidden_dim + 80  # 208 with default config
 
         self.policy_head = nn.Sequential(
             nn.Linear(model_cfg.latent_dim, wider_hidden),
             nn.ReLU(),
-            nn.Linear(wider_hidden, model_cfg.hidden_dim),
-            nn.ReLU(),
-            nn.Linear(model_cfg.hidden_dim, env_cfg.num_actions),
+            nn.Linear(wider_hidden, env_cfg.num_actions),
         )
 
         self.value_head = nn.Sequential(
             nn.Linear(model_cfg.latent_dim, wider_hidden),
             nn.ReLU(),
-            nn.Linear(wider_hidden, model_cfg.hidden_dim),
-            nn.ReLU(),
-            nn.Linear(model_cfg.hidden_dim, 1),
+            nn.Linear(wider_hidden, 1),
         )
 
     def forward(

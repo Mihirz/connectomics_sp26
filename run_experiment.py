@@ -372,8 +372,7 @@ def run_full_experiment(cfg: ExperimentConfig):
     print("=" * 70)
 
     for task in cfg.tasks:
-        aug_trainer = AugmentedTrainer(cfg, task)
-        aug_trainer.model = augmented_model  # Reuse same model across tasks
+        aug_trainer = AugmentedTrainer(cfg, task, existing_model=augmented_model)
 
         aug_results = train_on_task(
             aug_trainer, cfg, task, cfg.train.total_episodes, f"augmented"
@@ -488,7 +487,7 @@ Examples:
     print(f"Device: {cfg.device}")
     if cfg.device == "cuda":
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"VRAM: {torch.cuda.get_device_properties(0).total_mem / 1024**3:.1f} GB")
+        print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
 
     set_seed(cfg.seed)
 

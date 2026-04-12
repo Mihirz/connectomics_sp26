@@ -81,12 +81,20 @@ def evaluate_model(
         ep_reward = 0
         ep_steps = 0
 
+        # Initialize GRU hidden state for augmented model (reset each episode)
+        if is_augmented:
+            meta_hidden = model.init_meta_hidden(1)
+
         while not done:
             obs_tensor = torch.FloatTensor(obs).unsqueeze(0).to(device)
 
             with torch.no_grad():
                 if is_augmented:
-                    action, _, obj_idx, _, _, _ = model(obs_tensor, deterministic=True)
+                    # Use deterministic actions but stochastic meta-controller
+                    # to preserve the strategy diversity that is the model's strength.
+                    action, _, obj_idx, _, _, _, meta_hidden = model(
+                        obs_tensor, meta_hidden, deterministic=False
+                    )
                     obj_selections[obj_idx.item()] += 1
                 else:
                     action, _, _ = model(obs_tensor, deterministic=True)
@@ -273,12 +281,16 @@ def eval_few_shot_adaptation(
         for ep in range(max_adaptation_episodes):
             obs, _ = env.reset()
             done = False
+            if is_aug:
+                meta_hidden = ft_model.init_meta_hidden(1)
 
             while not done:
                 obs_tensor = torch.FloatTensor(obs).unsqueeze(0).to(cfg.device)
                 with torch.no_grad():
                     if is_aug:
-                        action, _, _, _, _, _ = ft_model(obs_tensor)
+                        action, _, _, _, _, _, meta_hidden = ft_model(
+                            obs_tensor, meta_hidden
+                        )
                     else:
                         action, _, _ = ft_model(obs_tensor)
                 obs, ri, done, _ = env.step(action.item())

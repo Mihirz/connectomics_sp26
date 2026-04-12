@@ -19,6 +19,7 @@ import os
 import json
 import time
 import torch
+import torch.nn as nn
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")  # Non-interactive backend for headless environments
@@ -90,6 +91,12 @@ def train_on_task(
 
     start_time = time.time()
 
+    # Early stopping state: track peak performance and stop if it degrades
+    best_eval_success = 0.0
+    evals_since_best = 0
+    best_model_state = None
+    early_stopped = False
+
     while total_episodes_approx < num_episodes:
         # ── Step 1: Collect rollout ──
         episode_stats = trainer.collect_rollout()
@@ -135,6 +142,25 @@ def train_on_task(
             status += f" | {eps_per_sec:.1f} ep/s"
 
             print(status)
+
+            # ── Early stopping: save best model, stop if performance degrades ──
+            current_success = eval_result['success_rate']
+            if current_success > best_eval_success:
+                best_eval_success = current_success
+                evals_since_best = 0
+                # Save best model weights
+                import copy
+                best_model_state = copy.deepcopy(trainer.model.state_dict())
+            else:
+                evals_since_best += 1
+
+            # Stop if we had good performance (>0.5) and it's been declining for 4 evals
+            if best_eval_success >= 0.5 and evals_since_best >= 4:
+                print(f"  [early stopping: best={best_eval_success:.3f}, "
+                      f"current={current_success:.3f}, restoring best weights]")
+                trainer.model.load_state_dict(best_model_state)
+                early_stopped = True
+                break
 
     # Final evaluation
     final_eval = evaluate_model(
@@ -371,14 +397,113 @@ def run_full_experiment(cfg: ExperimentConfig):
     print("PHASE 1: TRAINING")
     print("=" * 70)
 
+    # Interleaved training from scratch with shared optimizer.
+    # No MWM pre-training — all tasks get equal footing so the encoder
+    # develops balanced features for all tasks, not MWM-biased features.
+    print("\n  Interleaved training from scratch (shared optimizer)...")
+    import torch.optim as optim
+    shared_optimizer = optim.Adam([
+        {"params": augmented_model.encoder.parameters(), "lr": cfg.train.lr_policy},
+        {"params": augmented_model.policy_head.parameters(), "lr": cfg.train.lr_policy},
+        {"params": augmented_model.value_head.parameters(), "lr": cfg.train.lr_policy},
+        {"params": augmented_model.obj_embeddings.parameters(), "lr": cfg.train.lr_policy},
+        {"params": augmented_model.meta_controller.parameters(), "lr": cfg.train.lr_meta},
+        {"params": augmented_model.meta_value_head.parameters(), "lr": cfg.train.lr_meta},
+    ])
+    aug_trainers = {}
     for task in cfg.tasks:
-        aug_trainer = AugmentedTrainer(cfg, task, existing_model=augmented_model)
+        trainer = AugmentedTrainer(cfg, task, existing_model=augmented_model)
+        trainer.optimizer = shared_optimizer  # Replace per-trainer optimizer
+        aug_trainers[task] = trainer
 
-        aug_results = train_on_task(
-            aug_trainer, cfg, task, cfg.train.total_episodes, f"augmented"
+    eps_per_rollout = cfg.train.num_parallel_envs * cfg.train.rollout_steps / cfg.env.max_steps_per_episode
+    total_interleaved_eps = int(cfg.train.total_episodes * len(cfg.tasks) * 2.0)  # 2x budget for harder two-level optimization
+    task_episode_counts = {t: 0 for t in cfg.tasks}
+    task_eval_history = {t: [] for t in cfg.tasks}
+    task_history = {t: defaultdict(list) for t in cfg.tasks}
+    rollout_idx = 0
+
+    # Multi-task early stopping: save best model across all tasks combined
+    import copy
+    best_multitask_score = 0.0
+    best_model_state = copy.deepcopy(augmented_model.state_dict())
+    evals_since_best = 0
+
+    start_time = time.time()
+    while sum(task_episode_counts.values()) < total_interleaved_eps:
+        # Round-robin through tasks
+        task = cfg.tasks[rollout_idx % len(cfg.tasks)]
+        trainer = aug_trainers[task]
+
+        episode_stats = trainer.collect_rollout()
+        update_metrics = trainer.update()
+        task_episode_counts[task] += eps_per_rollout
+
+        for k, v in update_metrics.items():
+            task_history[task][k].append(v)
+
+        # Periodic evaluation (every ~1000 episodes total)
+        if rollout_idx % (len(cfg.tasks) * max(1, int(250 / eps_per_rollout))) == 0 and rollout_idx > 0:
+            for eval_task in cfg.tasks:
+                eval_result = evaluate_model(
+                    augmented_model, cfg, eval_task,
+                    num_episodes=30,
+                    is_augmented=True,
+                )
+                task_eval_history[eval_task].append({
+                    "episode": task_episode_counts[eval_task],
+                    **eval_result,
+                })
+            elapsed = time.time() - start_time
+            total_eps = sum(task_episode_counts.values())
+            successes = {t: task_eval_history[t][-1]["success_rate"] if task_eval_history[t] else 0
+                        for t in cfg.tasks}
+            # Breadth-weighted score: count tasks above 25%, plus uncapped sum
+            tasks_above = sum(1 for s in successes.values() if s >= 0.25)
+            raw_sum = sum(successes.values())  # No cap — keep improving
+            multitask_score = tasks_above * 2.0 + raw_sum  # Prioritize breadth, then depth
+            obj_ent = update_metrics.get('obj_entropy', 0)
+            print(f"  [interleaved] total_eps≈{total_eps:.0f} | "
+                  + " | ".join(f"{t[:4]}={successes[t]:.2f}" for t in cfg.tasks)
+                  + f" | above25={tasks_above} | score={multitask_score:.2f}"
+                  + f" | obj_ent={obj_ent:.3f} | {total_eps/elapsed:.1f} ep/s")
+
+            # Multi-task early stopping (breadth-weighted)
+            if multitask_score > best_multitask_score:
+                best_multitask_score = multitask_score
+                best_model_state = copy.deepcopy(augmented_model.state_dict())
+                evals_since_best = 0
+            else:
+                evals_since_best += 1
+
+            # Stop if peaked and declining for 10 evals, AND we've trained enough
+            if best_multitask_score >= 10.0 and evals_since_best >= 10 and total_eps > total_interleaved_eps * 0.7:
+                print(f"  [multi-task early stop: best_score={best_multitask_score:.2f}, "
+                      f"current={multitask_score:.2f}, restoring best]")
+                augmented_model.load_state_dict(best_model_state)
+                break
+
+        rollout_idx += 1
+
+    # Restore best model if we didn't early stop
+    if evals_since_best > 0:
+        print(f"  [restoring best model: sum={best_multitask_score:.2f}]")
+        augmented_model.load_state_dict(best_model_state)
+
+    # Final evaluation per task
+    for task in cfg.tasks:
+        final_eval = evaluate_model(
+            augmented_model, cfg, task,
+            num_episodes=cfg.train.num_eval_episodes,
+            is_augmented=True,
         )
-        performance_history[task] = aug_results["final"]["success_rate"]
-        all_results[task] = {"augmented": aug_results}
+        print(f"  ✓ augmented on {task}: success_rate={final_eval['success_rate']:.3f}")
+        all_results.setdefault(task, {})["augmented"] = {
+            "history": dict(task_history[task]),
+            "eval_history": task_eval_history[task],
+            "final": final_eval,
+        }
+        performance_history[task] = final_eval["success_rate"]
 
     # ── Train baseline models (one per task) ──
     baseline_models = {}

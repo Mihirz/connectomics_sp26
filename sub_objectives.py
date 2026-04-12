@@ -128,8 +128,9 @@ class IntrinsicRewardComputer:
         if threat_dist < 3.0:
             # Close threat: strong avoidance reward for increasing distance
             return self.cfg.avoid_reward * (3.0 - threat_dist) / 3.0
-        elif threat_dist < 5.0:
-            return self.cfg.avoid_reward * 0.3
+        elif threat_dist < 6.0:
+            # Medium threat: mild avoidance signal to maintain safe distance
+            return self.cfg.avoid_reward * 0.2
         return 0.0
 
     # ── EXPLOIT ──────────────────────────────────────────────────────────────

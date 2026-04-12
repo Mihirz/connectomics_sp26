@@ -22,7 +22,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
-from typing import Tuple, Optional, Optional
+from typing import Tuple, Optional
 from config import ModelConfig, EnvConfig
 
 
@@ -110,9 +110,11 @@ class MetaController(nn.Module):
     """
     The "prefrontal cortex" — selects which sub-objective to pursue.
 
-    This is a small MLP that outputs a categorical distribution over sub-objectives.
-    It's intentionally small (64 hidden units) because it's a selector, not a
-    feature extractor.  The heavy lifting is done by the encoder and policy.
+    Uses a GRU cell to integrate information over time, mirroring how the
+    biological PFC maintains working memory of recent experience to guide
+    strategy selection.  The GRU hidden state accumulates a summary of
+    what the agent has seen and done, enabling decisions like "I've been
+    exploring for 40 steps with no progress — switch to approach."
 
     Training signal: ONLY sparse negative reward on task failure.
     The meta-controller must learn which sub-objectives, in which contexts,
@@ -121,23 +123,27 @@ class MetaController(nn.Module):
 
     def __init__(self, latent_dim: int, hidden_dim: int, num_objectives: int):
         super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(latent_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
+        self.hidden_dim = hidden_dim
+        self.gru = nn.GRUCell(latent_dim, hidden_dim)
+        self.head = nn.Sequential(
             nn.ReLU(),
             nn.Linear(hidden_dim, num_objectives),
         )
 
-    def forward(self, latent: torch.Tensor) -> Categorical:
+    def forward(self, latent: torch.Tensor, hidden: torch.Tensor) -> Tuple[Categorical, torch.Tensor]:
         """
         Args:
             latent: (batch, latent_dim) from CNN encoder
+            hidden: (batch, hidden_dim) GRU hidden state
         Returns:
-            Categorical distribution over sub-objectives
+            Categorical distribution over sub-objectives, updated hidden state
         """
-        logits = self.net(latent)
-        return Categorical(logits=logits)
+        h = self.gru(latent, hidden)
+        logits = self.head(h)
+        return Categorical(logits=logits), h
+
+    def init_hidden(self, batch_size: int, device: str) -> torch.Tensor:
+        return torch.zeros(batch_size, self.hidden_dim, device=device)
 
 
 class AugmentedModel(nn.Module):
@@ -194,22 +200,27 @@ class AugmentedModel(nn.Module):
             nn.Linear(model_cfg.meta_hidden_dim, 1),
         )
 
+    def init_meta_hidden(self, batch_size: int) -> torch.Tensor:
+        """Initialize GRU hidden state for the meta-controller."""
+        device = next(self.parameters()).device
+        return self.meta_controller.init_hidden(batch_size, device)
+
     def forward(
         self,
         obs: torch.Tensor,
+        meta_hidden: torch.Tensor,
         deterministic: bool = False,
         forced_obj_idx: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Full forward pass.
 
         Args:
             obs:             (batch, C, H, W) observation
+            meta_hidden:     (batch, meta_hidden_dim) GRU hidden state
             deterministic:   if True, use argmax instead of sampling
             forced_obj_idx:  (batch,) if provided, use this sub-objective instead
-                             of sampling from the meta-controller.  The meta-controller
-                             still computes log probs for the forced selection (needed
-                             for PPO ratio computation).
+                             of sampling from the meta-controller.
 
         Returns:
             action:         (batch,) selected actions
@@ -218,14 +229,14 @@ class AugmentedModel(nn.Module):
             obj_logprob:    (batch,) log probability of selected sub-objectives
             value:          (batch,) estimated intrinsic value
             meta_value:     (batch,) estimated extrinsic (sparse) value
+            meta_hidden:    (batch, meta_hidden_dim) updated GRU hidden state
         """
         # Step 1: Encode observation
         latent = self.encoder(obs)
 
-        # Step 2: Meta-controller computes distribution over sub-objectives
-        obj_dist = self.meta_controller(latent)
+        # Step 2: Meta-controller with GRU integrates temporal context
+        obj_dist, new_hidden = self.meta_controller(latent, meta_hidden)
         if forced_obj_idx is not None:
-            # Use the forced sub-objective (temporal commitment)
             obj_idx = forced_obj_idx
         elif deterministic:
             obj_idx = obj_dist.probs.argmax(dim=-1)
@@ -252,22 +263,30 @@ class AugmentedModel(nn.Module):
         value = self.value_head(conditioned).squeeze(-1)
         meta_value = self.meta_value_head(latent).squeeze(-1)
 
-        return action, action_logprob, obj_idx, obj_logprob, value, meta_value
+        return action, action_logprob, obj_idx, obj_logprob, value, meta_value, new_hidden
 
     def evaluate_actions(
         self,
         obs: torch.Tensor,
         actions: torch.Tensor,
         obj_indices: torch.Tensor,
+        meta_hidden: torch.Tensor = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Re-evaluate log probabilities and values for stored transitions.
         Used during PPO update to compute ratios and entropy.
+
+        Args:
+            meta_hidden: (batch, meta_hidden_dim) stored GRU hidden states from
+                         rollout collection. Required for correct re-evaluation
+                         of the recurrent meta-controller.
         """
         latent = self.encoder(obs)
 
-        # Meta-controller
-        obj_dist = self.meta_controller(latent)
+        # Meta-controller (use stored hidden states from rollout)
+        if meta_hidden is None:
+            meta_hidden = self.init_meta_hidden(latent.size(0))
+        obj_dist, _ = self.meta_controller(latent, meta_hidden)
         obj_logprob = obj_dist.log_prob(obj_indices)
         obj_entropy = obj_dist.entropy()
 
@@ -315,7 +334,7 @@ class BaselineModel(nn.Module):
         # 2-layer heads (same depth as augmented model's heads) with a wider
         # hidden dim to compensate for the missing meta-controller, embeddings,
         # and meta-value head.  Target: roughly match augmented param count.
-        wider_hidden = model_cfg.hidden_dim + 80  # 208 with default config
+        wider_hidden = model_cfg.hidden_dim + 160  # ~288 to match augmented GRU param count
 
         self.policy_head = nn.Sequential(
             nn.Linear(model_cfg.latent_dim, wider_hidden),

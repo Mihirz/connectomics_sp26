@@ -32,19 +32,19 @@ class EnvConfig:
     # ── Visual Foraging ──
     # Collect food items while avoiding moving predator zones.
     forage_num_food: int = 8
-    forage_num_predators: int = 3
-    forage_predator_speed: float = 0.5   # Cells per step (fractional = stochastic)
-    forage_food_collect_target: int = 6  # Must collect this many to "succeed"
+    forage_num_predators: int = 1
+    forage_predator_speed: float = 0.12  # Cells per step (fractional = stochastic)
+    forage_food_collect_target: int = 2  # Must collect this many to "succeed"
 
     # ── Dynamic Obstacle Course ──
     # Navigate from start to goal through moving obstacles.
-    obstacle_num_obstacles: int = 10
-    obstacle_speed: float = 0.7
+    obstacle_num_obstacles: int = 2
+    obstacle_speed: float = 0.1
 
     # ── Visual Search with Cues ──
-    # Find a hidden target; partial cues (arrows/gradients) may be present.
-    search_num_distractors: int = 12
-    search_cue_probability: float = 0.5  # Probability that a helpful cue appears
+    # Find a target among distractors; cues (arrows/gradients) guide the agent.
+    search_num_distractors: int = 5
+    search_cue_probability: float = 1.0  # Always provide cue arrows for learnable signal
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -90,7 +90,8 @@ class TrainConfig:
     gae_lambda: float = 0.95           # GAE parameter
     clip_epsilon: float = 0.2          # PPO clipping
     entropy_coef: float = 0.01         # Entropy bonus for action policy
-    meta_entropy_coef: float = 0.05    # Higher entropy for meta-controller (encourage exploration of strategies)
+    meta_entropy_coef: float = 0.15    # Higher entropy for meta-controller (encourage exploration of strategies)
+    meta_entropy_floor: float = 0.4    # If obj_entropy drops below this, apply 10x stronger entropy bonus
     value_loss_coef: float = 0.5
     max_grad_norm: float = 0.5
 
@@ -100,7 +101,7 @@ class TrainConfig:
     # the action policy time to execute a coherent strategy and reduces the
     # meta-controller's credit assignment from ~300 decisions to ~20 per episode.
     # Biologically: PFC executive control operates on seconds, not milliseconds.
-    meta_decision_interval: int = 15   # Steps between meta-controller decisions
+    meta_decision_interval: int = 8    # Steps between meta-controller decisions
 
     # ── Rollout settings ──
     # These are deliberately small to fit in ≤ 8 GB VRAM.
@@ -112,7 +113,7 @@ class TrainConfig:
     # ── Experiment schedule ──
     total_episodes: int = 5000         # Per task (can override via CLI)
     eval_interval: int = 250           # Evaluate every N episodes
-    num_eval_episodes: int = 50        # Episodes per evaluation
+    num_eval_episodes: int = 100       # Episodes per evaluation (larger for less noise)
 
     # ── Reward design (Design B) ──
     # Both models receive the same dense task reward.  The augmented model
@@ -125,7 +126,7 @@ class TrainConfig:
     # productive purely from whether they avoid failure and generate useful
     # intrinsic signals.
     failure_penalty: float = -1.0      # Given on episode timeout or catastrophic failure
-    success_signal: float = 0.0        # No positive sparse signal (meta-controller)
+    success_signal: float = 0.5        # Small positive sparse signal on success (meta-controller)
 
     # ── Meta-controller intrinsic feedback ──
     # The meta-controller also receives a fraction of the selected sub-objective's
@@ -140,7 +141,7 @@ class TrainConfig:
     # (~0.01/step) to supplement rather than dominate the task signal.
     # Without scaling, intrinsic rewards are ~10x larger than dense,
     # drowning out the task gradient.
-    intrinsic_reward_scale: float = 0.1  # Scale intrinsic rewards down by 10x
+    intrinsic_reward_scale: float = 0.08  # Slightly larger to compensate for sparser dense rewards
 
     # ── Dense reward (baseline model) ──
     # Standard dense reward shaping for comparison.

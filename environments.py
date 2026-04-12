@@ -222,11 +222,10 @@ class MorrisWaterMaze(BaseGridEnv):
             self.done = True
 
         # ── Sparse reward (AUGMENTED model uses this) ──
-        # Only negative signal on failure; zero on success.
         sparse_reward = 0.0
         if on_platform:
             self.done = True
-            # No positive reward!  The augmented model must learn from intrinsic rewards.
+            sparse_reward = 0.5  # Small positive signal for success
 
         # ── Auxiliary info for sub-objectives ──
         is_novel = self.visit_counts[self.agent_pos[0], self.agent_pos[1]] <= 1
@@ -408,11 +407,11 @@ class VisualForaging(BaseGridEnv):
         self.visit_counts[self.agent_pos[0], self.agent_pos[1]] += 1
         self._move_predators()
 
-        # Check food collection
+        # Check food collection (proximity-based: within 2 cells)
         food_collected_this_step = False
         remaining_food = []
         for fp in self.food_positions:
-            if np.array_equal(self.agent_pos, fp):
+            if np.linalg.norm(self.agent_pos - fp) < 2.0:
                 self.collected += 1
                 food_collected_this_step = True
             else:
@@ -425,7 +424,7 @@ class VisualForaging(BaseGridEnv):
         for pp in self.predator_positions:
             d = np.linalg.norm(self.agent_pos.astype(float) - pp)
             min_predator_dist = min(min_predator_dist, d)
-            if d < 1.5:  # Caught!
+            if d < 1.0:  # Caught!
                 predator_caught = True
 
         reward_info = self._compute_reward_info(
@@ -434,7 +433,9 @@ class VisualForaging(BaseGridEnv):
 
         if predator_caught or self.collected >= self.collect_target or self.step_count >= self.max_steps:
             self.done = True
-            if self.step_count >= self.max_steps and self.collected < self.collect_target:
+            if self.collected >= self.collect_target and not predator_caught:
+                reward_info["sparse_reward"] = 0.5  # Success signal
+            elif self.step_count >= self.max_steps and self.collected < self.collect_target:
                 progress = self.collected / max(self.collect_target, 1)
                 reward_info["sparse_reward"] = -1.0 + progress * 0.7
                 reward_info["timeout"] = True
@@ -454,7 +455,8 @@ class VisualForaging(BaseGridEnv):
             nearest_food_dist = 0
             approach_delta = 0
 
-        # Dense reward
+        # Dense reward — no approach shaping (sparser signal).
+        # The augmented model gets approach signals via its APPROACH sub-objective.
         dense_reward = -0.01
         if food_collected:
             dense_reward += 0.3
@@ -497,10 +499,27 @@ class VisualForaging(BaseGridEnv):
         for c in range(3):
             img[c][visited_mask] = COLORS["visited"][c]
 
-        # Food
+        # Food proximity gradient (warmth toward nearest food)
+        if len(self.food_positions) > 0:
+            yy, xx = np.mgrid[0:self.size, 0:self.size]
+            min_food_dist = np.full((self.size, self.size), float('inf'))
+            for fp in self.food_positions:
+                dist = np.sqrt((yy - fp[0])**2 + (xx - fp[1])**2)
+                min_food_dist = np.minimum(min_food_dist, dist)
+            gradient_radius = self.size * 0.35
+            gradient_mask = min_food_dist < gradient_radius
+            warmth = 1.0 - (min_food_dist[gradient_mask] / gradient_radius)
+            warmth = warmth * 0.2  # 20% color shift
+            img[0][gradient_mask] += warmth  # Orange tint toward food
+
+        # Food (rendered as 3x3 blocks for visibility)
         for fp in self.food_positions:
-            for c in range(3):
-                img[c, fp[0], fp[1]] = COLORS["food"][c]
+            for dr in range(-1, 2):
+                for dc in range(-1, 2):
+                    r, ci = fp[0] + dr, fp[1] + dc
+                    if 0 <= r < self.size and 0 <= ci < self.size:
+                        for c in range(3):
+                            img[c, r, ci] = COLORS["food"][c]
 
         # Predators (rendered as 3×3 blocks)
         for pp in self.predator_positions:
@@ -549,9 +568,16 @@ class DynamicObstacleCourse(BaseGridEnv):
         self.done = False
         self.visit_counts = np.zeros((self.size, self.size), dtype=np.float32)
 
-        # Agent starts bottom-left, goal is top-right
-        self.agent_pos = np.array([self.size - 2, 1])
-        self.goal_pos = np.array([1, self.size - 2])
+        # Random start/goal positions in opposite corners (prevents memorized paths)
+        corners = [
+            (np.array([self.size - 2, 1]), np.array([1, self.size - 2])),
+            (np.array([1, 1]), np.array([self.size - 2, self.size - 2])),
+            (np.array([1, self.size - 2]), np.array([self.size - 2, 1])),
+            (np.array([self.size - 2, self.size - 2]), np.array([1, 1])),
+        ]
+        start, goal = corners[self.rng.randint(len(corners))]
+        self.agent_pos = start.copy()
+        self.goal_pos = goal.copy()
 
         # Scatter obstacles in the middle band
         self.obstacle_positions = []
@@ -588,24 +614,26 @@ class DynamicObstacleCourse(BaseGridEnv):
         self.visit_counts[self.agent_pos[0], self.agent_pos[1]] += 1
         self._move_obstacles()
 
-        # Check collision with obstacles
+        # Check collision with obstacles (agent must be on the exact obstacle cell)
         collision = False
         min_obs_dist = float("inf")
         for op in self.obstacle_positions:
             d = np.linalg.norm(self.agent_pos.astype(float) - op)
             min_obs_dist = min(min_obs_dist, d)
-            if d < 1.5:
+            if d < 1.0:
                 collision = True
 
-        reached_goal = np.array_equal(self.agent_pos, self.goal_pos)
+        reached_goal = np.linalg.norm(self.agent_pos - self.goal_pos) < 3.0
 
         reward_info = self._compute_reward_info(action, old_pos, collision, reached_goal, min_obs_dist)
 
         if collision or reached_goal or self.step_count >= self.max_steps:
             self.done = True
-            if collision:
+            if reached_goal:
+                reward_info["sparse_reward"] = 0.5  # Success signal
+            elif collision:
                 reward_info["sparse_reward"] = -1.0
-            if self.step_count >= self.max_steps and not reached_goal:
+            elif self.step_count >= self.max_steps and not reached_goal:
                 closeness = 1.0 - min(reward_info["dist_to_goal"] / (self.size * 1.4), 1.0)
                 reward_info["sparse_reward"] = -1.0 + closeness * 0.7
                 reward_info["timeout"] = True
@@ -635,7 +663,7 @@ class DynamicObstacleCourse(BaseGridEnv):
             "visit_count": self.visit_counts[self.agent_pos[0], self.agent_pos[1]],
             "dist_to_goal": dist_to_goal,
             "approach_delta": approach_delta,
-            "threat_nearby": min_obs_dist < 4.0,
+            "threat_nearby": min_obs_dist < 6.0,  # Wider detection gives AVOID sub-objective more signal
             "threat_dist": min_obs_dist,
             "agent_pos": self.agent_pos.copy(),
             "step": self.step_count,
@@ -749,13 +777,15 @@ class VisualSearchWithCues(BaseGridEnv):
         self._move_agent(action)
         self.visit_counts[self.agent_pos[0], self.agent_pos[1]] += 1
 
-        found_target = np.linalg.norm(self.agent_pos - self.target_pos) < 1.5
+        found_target = np.linalg.norm(self.agent_pos - self.target_pos) < 2.0
 
         reward_info = self._compute_reward_info(action, old_pos, found_target)
 
         if found_target or self.step_count >= self.max_steps:
             self.done = True
-            if self.step_count >= self.max_steps and not found_target:
+            if found_target:
+                reward_info["sparse_reward"] = 0.5  # Success signal
+            elif self.step_count >= self.max_steps:
                 closeness = 1.0 - min(reward_info["dist_to_goal"] / (self.size * 1.4), 1.0)
                 reward_info["sparse_reward"] = -1.0 + closeness * 0.7
                 reward_info["timeout"] = True
@@ -800,15 +830,33 @@ class VisualSearchWithCues(BaseGridEnv):
         for c in range(3):
             img[c][visited_mask] = COLORS["visited"][c]
 
+        # Proximity gradient toward target (subtle warmth signal)
+        if self.target_pos is not None:
+            yy, xx = np.mgrid[0:self.size, 0:self.size]
+            dist_to_target = np.sqrt((yy - self.target_pos[0])**2 +
+                                     (xx - self.target_pos[1])**2)
+            gradient_radius = self.size * 0.4
+            gradient_mask = dist_to_target < gradient_radius
+            warmth = 1.0 - (dist_to_target[gradient_mask] / gradient_radius)
+            warmth = warmth * 0.15  # Subtle 15% color shift
+            img[0][gradient_mask] += warmth
+            img[2][gradient_mask] -= warmth * 0.3
+
         # Distractors
         for dp in self.distractor_positions:
             for c in range(3):
                 img[c, dp[0], dp[1]] = COLORS["distractor"][c]
 
-        # Target (hidden — looks like a distractor!)
+        # Target — 3x3 block in bright cyan, distinct from food (orange) and
+        # distractors (grey) so the shared encoder doesn't confuse tasks.
         tr, tc = self.target_pos
-        for c in range(3):
-            img[c, tr, tc] = COLORS["distractor"][c]  # Indistinguishable!
+        for dr in range(-1, 2):
+            for dc in range(-1, 2):
+                r, ci = tr + dr, tc + dc
+                if 0 <= r < self.size and 0 <= ci < self.size:
+                    img[0, r, ci] = 0.1
+                    img[1, r, ci] = 0.8
+                    img[2, r, ci] = 1.0
 
         # Cue arrows (if present)
         for cp in self.cue_positions:

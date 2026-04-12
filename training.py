@@ -33,7 +33,7 @@ import numpy as np
 from typing import Dict, List, Optional, Tuple
 from collections import defaultdict
 
-from config import ExperimentConfig
+from config import ExperimentConfig, ModelConfig
 from models import AugmentedModel, BaselineModel
 from sub_objectives import IntrinsicRewardComputer, NUM_SUB_OBJECTIVES
 from environments import make_vectorized_env
@@ -55,7 +55,8 @@ class RolloutBuffer:
         Total: ~30 MB — well within budget.
     """
 
-    def __init__(self, num_steps: int, num_envs: int, obs_shape: Tuple, device: str):
+    def __init__(self, num_steps: int, num_envs: int, obs_shape: Tuple, device: str,
+                 meta_hidden_dim: int = 0):
         self.num_steps = num_steps
         self.num_envs = num_envs
         self.device = device
@@ -73,6 +74,12 @@ class RolloutBuffer:
         self.dones = torch.zeros(num_steps, num_envs, device=device)
         self.obj_indices = torch.zeros(num_steps, num_envs, dtype=torch.long, device=device)
         self.obj_logprobs = torch.zeros(num_steps, num_envs, device=device)
+
+        # GRU hidden states for recurrent meta-controller (stored at each step
+        # so PPO can re-evaluate with the correct hidden state after shuffling)
+        self.meta_hidden_dim = meta_hidden_dim
+        if meta_hidden_dim > 0:
+            self.meta_hiddens = torch.zeros(num_steps, num_envs, meta_hidden_dim, device=device)
 
         # Computed during finalize
         self.advantages = torch.zeros(num_steps, num_envs, device=device)
@@ -139,7 +146,7 @@ class RolloutBuffer:
             step_idx = batch_idx // self.num_envs
             env_idx = batch_idx % self.num_envs
 
-            yield {
+            batch = {
                 "obs": self.observations[step_idx, env_idx],
                 "actions": self.actions[step_idx, env_idx],
                 "action_logprobs": self.action_logprobs[step_idx, env_idx],
@@ -150,6 +157,9 @@ class RolloutBuffer:
                 "returns": self.returns[step_idx, env_idx],
                 "meta_returns": self.meta_returns[step_idx, env_idx],
             }
+            if self.meta_hidden_dim > 0:
+                batch["meta_hiddens"] = self.meta_hiddens[step_idx, env_idx]
+            yield batch
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -203,10 +213,11 @@ class AugmentedTrainer:
             task_name, cfg.env, cfg.train.num_parallel_envs, base_seed=cfg.seed
         )
 
-        # ── Rollout buffer ──
+        # ── Rollout buffer (with GRU hidden state storage) ──
         obs_shape = (cfg.env.obs_channels, cfg.env.grid_size, cfg.env.grid_size)
         self.buffer = RolloutBuffer(
-            cfg.train.rollout_steps, cfg.train.num_parallel_envs, obs_shape, self.device
+            cfg.train.rollout_steps, cfg.train.num_parallel_envs, obs_shape, self.device,
+            meta_hidden_dim=cfg.model.meta_hidden_dim,
         )
 
         # ── Tracking ──
@@ -236,6 +247,9 @@ class AugmentedTrainer:
 
         episode_stats = defaultdict(list)
 
+        # ── GRU hidden state for recurrent meta-controller ──
+        meta_hidden = self.model.init_meta_hidden(self.cfg.train.num_parallel_envs)
+
         # ── Temporal commitment state ──
         # Track current sub-objective and time-until-next-decision per env.
         decision_interval = self.cfg.train.meta_decision_interval
@@ -246,28 +260,35 @@ class AugmentedTrainer:
 
         for step in range(self.cfg.train.rollout_steps):
             with torch.no_grad():
+                # Store the hidden state BEFORE this step's forward pass
+                # (this is what PPO needs to re-evaluate the decision made at this step)
+                step_meta_hidden = meta_hidden.clone()
+
                 # Determine which envs need a new meta-controller decision
                 if needs_decision.any():
                     # For envs needing a decision: sample from meta-controller
-                    action, action_lp, new_obj, obj_lp, value, meta_value = self.model(obs)
+                    action, action_lp, new_obj, obj_lp, value, meta_value, new_hidden = \
+                        self.model(obs, meta_hidden)
                     # Update committed sub-objectives for those envs
                     current_obj[needs_decision] = new_obj[needs_decision]
                     steps_until_decision[needs_decision] = decision_interval
+                    # Update hidden state
+                    meta_hidden = new_hidden
                 else:
                     # All envs are committed: use forced sub-objectives
-                    action, action_lp, _, obj_lp, value, meta_value = self.model(
-                        obs, forced_obj_idx=current_obj
-                    )
+                    action, action_lp, _, obj_lp, value, meta_value, new_hidden = \
+                        self.model(obs, meta_hidden, forced_obj_idx=current_obj)
                     new_obj = current_obj
+                    meta_hidden = new_hidden
 
                 # For mixed case (some need decision, some don't), re-run
                 # with forced for the committed envs to get correct log probs.
                 # Simplified: always pass forced_obj for consistent log probs.
                 if needs_decision.any() and not needs_decision.all():
                     # Re-evaluate with the actual committed objectives
-                    action, action_lp, _, obj_lp, value, meta_value = self.model(
-                        obs, forced_obj_idx=current_obj
-                    )
+                    action, action_lp, _, obj_lp, value, meta_value, new_hidden = \
+                        self.model(obs, step_meta_hidden, forced_obj_idx=current_obj)
+                    meta_hidden = new_hidden
 
             obj_idx = current_obj.clone()
             steps_until_decision -= 1
@@ -315,14 +336,17 @@ class AugmentedTrainer:
                     reward_computers[i].reset(self.cfg.env.grid_size)
                     # Force a new decision on episode reset
                     needs_decision[i] = True
+                    # Reset GRU hidden state for this env on episode boundary
+                    meta_hidden[i] = 0.0
 
-            # Store transition
+            # Store transition (including GRU hidden state for PPO re-evaluation)
             self.buffer.add(
                 observations=obs,
                 actions=action,
                 action_logprobs=action_lp,
                 obj_indices=obj_idx,
                 obj_logprobs=obj_lp,
+                meta_hiddens=step_meta_hidden,
                 intrinsic_rewards=torch.FloatTensor(intrinsic_rewards).to(self.device),
                 sparse_rewards=torch.FloatTensor(sparse_rewards).to(self.device),
                 values=value,
@@ -336,7 +360,7 @@ class AugmentedTrainer:
 
         # Compute last values for GAE bootstrap
         with torch.no_grad():
-            _, _, _, _, last_value, last_meta_value = self.model(obs)
+            _, _, _, _, last_value, last_meta_value, _ = self.model(obs, meta_hidden)
 
         self.buffer.compute_gae(
             last_value, last_meta_value,
@@ -361,10 +385,11 @@ class AugmentedTrainer:
         for epoch in range(cfg.ppo_epochs):
             for batch in self.buffer.get_batches(cfg.mini_batch_size):
               try:
-                # Re-evaluate actions and objectives
+                # Re-evaluate actions and objectives (pass stored GRU hidden states)
                 action_lp, obj_lp, values, meta_values, action_ent, obj_ent = \
                     self.model.evaluate_actions(
-                        batch["obs"], batch["actions"], batch["obj_indices"]
+                        batch["obs"], batch["actions"], batch["obj_indices"],
+                        meta_hidden=batch.get("meta_hiddens"),
                     )
 
                 # ── ACTION POLICY LOSS (intrinsic rewards) ──
@@ -395,13 +420,24 @@ class AugmentedTrainer:
                 meta_value_loss = 0.5 * (meta_values - batch["meta_returns"]).pow(2).mean()
 
                 # ── TOTAL LOSS ──
+                # Smooth entropy floor: continuously scale up entropy bonus
+                # as entropy drops below the floor, avoiding destabilizing cliffs
+                mean_obj_ent = obj_ent.mean()
+                ent_val = mean_obj_ent.item()
+                if ent_val < cfg.meta_entropy_floor:
+                    # Smoothly ramp from 1x to 5x as entropy goes from floor to 0
+                    scale = 1.0 + 4.0 * (1.0 - ent_val / cfg.meta_entropy_floor)
+                    effective_meta_ent_coef = cfg.meta_entropy_coef * scale
+                else:
+                    effective_meta_ent_coef = cfg.meta_entropy_coef
+
                 loss = (
                     policy_loss
                     + cfg.value_loss_coef * value_loss
                     + meta_loss
                     + cfg.value_loss_coef * meta_value_loss
                     - cfg.entropy_coef * action_ent.mean()
-                    - cfg.meta_entropy_coef * obj_ent.mean()
+                    - effective_meta_ent_coef * mean_obj_ent
                 )
 
                 # ── NaN protection ──

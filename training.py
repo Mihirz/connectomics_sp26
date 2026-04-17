@@ -489,7 +489,7 @@ class BaselineTrainer:
         self.optimizer = optim.Adam(self.model.parameters(), lr=cfg.train.lr_policy)
 
         self.env = make_vectorized_env(
-            task_name, cfg.env, cfg.train.num_parallel_envs, base_seed=cfg.seed + 1000
+            task_name, cfg.env, cfg.train.num_parallel_envs, base_seed=cfg.seed
         )
 
         obs_shape = (cfg.env.obs_channels, cfg.env.grid_size, cfg.env.grid_size)

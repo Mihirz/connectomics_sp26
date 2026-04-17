@@ -162,6 +162,11 @@ def train_on_task(
                 early_stopped = True
                 break
 
+    # Restore best model weights if we didn't early stop but had a better checkpoint
+    if not early_stopped and best_model_state is not None and evals_since_best > 0:
+        print(f"  [restoring best weights: best={best_eval_success:.3f}]")
+        trainer.model.load_state_dict(best_model_state)
+
     # Final evaluation
     final_eval = evaluate_model(
         trainer.model, cfg, task_name,
@@ -417,7 +422,7 @@ def run_full_experiment(cfg: ExperimentConfig):
         aug_trainers[task] = trainer
 
     eps_per_rollout = cfg.train.num_parallel_envs * cfg.train.rollout_steps / cfg.env.max_steps_per_episode
-    total_interleaved_eps = int(cfg.train.total_episodes * len(cfg.tasks) * 2.0)  # 2x budget for harder two-level optimization
+    total_interleaved_eps = int(cfg.train.total_episodes * len(cfg.tasks))  # Same per-task budget as baseline
     task_episode_counts = {t: 0 for t in cfg.tasks}
     task_eval_history = {t: [] for t in cfg.tasks}
     task_history = {t: defaultdict(list) for t in cfg.tasks}
@@ -505,15 +510,100 @@ def run_full_experiment(cfg: ExperimentConfig):
         }
         performance_history[task] = final_eval["success_rate"]
 
-    # ── Train baseline models (one per task) ──
+    # ── Train baseline model (multi-task, same structure as augmented) ──
+    # Use ONE shared baseline model trained interleaved across all tasks,
+    # mirroring the augmented model's training regime exactly.  This ensures
+    # any performance difference is attributable to the meta-controller,
+    # not to multi-task vs single-task training.
+    baseline_model = BaselineModel(cfg.model, cfg.env).to(cfg.device)
+    base_optimizer = optim.Adam(baseline_model.parameters(), lr=cfg.train.lr_policy)
+    base_trainers = {}
+    for task in cfg.tasks:
+        trainer = BaselineTrainer(cfg, task)
+        trainer.model = baseline_model
+        trainer.optimizer = base_optimizer
+        base_trainers[task] = trainer
+
+    base_task_episode_counts = {t: 0 for t in cfg.tasks}
+    base_task_eval_history = {t: [] for t in cfg.tasks}
+    base_task_history = {t: defaultdict(list) for t in cfg.tasks}
+    base_rollout_idx = 0
+
+    best_base_multitask_score = 0.0
+    best_base_model_state = copy.deepcopy(baseline_model.state_dict())
+    base_evals_since_best = 0
+
+    total_base_interleaved_eps = int(cfg.train.total_episodes * len(cfg.tasks))
+
+    print("\n  Interleaved baseline training (shared model)...")
+    base_start_time = time.time()
+    while sum(base_task_episode_counts.values()) < total_base_interleaved_eps:
+        task = cfg.tasks[base_rollout_idx % len(cfg.tasks)]
+        trainer = base_trainers[task]
+
+        episode_stats = trainer.collect_rollout()
+        update_metrics = trainer.update()
+        base_task_episode_counts[task] += eps_per_rollout
+
+        for k, v in update_metrics.items():
+            base_task_history[task][k].append(v)
+
+        if base_rollout_idx % (len(cfg.tasks) * max(1, int(250 / eps_per_rollout))) == 0 and base_rollout_idx > 0:
+            for eval_task in cfg.tasks:
+                eval_result = evaluate_model(
+                    baseline_model, cfg, eval_task,
+                    num_episodes=30,
+                    is_augmented=False,
+                )
+                base_task_eval_history[eval_task].append({
+                    "episode": base_task_episode_counts[eval_task],
+                    **eval_result,
+                })
+            elapsed = time.time() - base_start_time
+            total_eps = sum(base_task_episode_counts.values())
+            successes = {t: base_task_eval_history[t][-1]["success_rate"] if base_task_eval_history[t] else 0
+                        for t in cfg.tasks}
+            tasks_above = sum(1 for s in successes.values() if s >= 0.25)
+            raw_sum = sum(successes.values())
+            multitask_score = tasks_above * 2.0 + raw_sum
+            print(f"  [baseline-interleaved] total_eps≈{total_eps:.0f} | "
+                  + " | ".join(f"{t[:4]}={successes[t]:.2f}" for t in cfg.tasks)
+                  + f" | above25={tasks_above} | score={multitask_score:.2f}"
+                  + f" | {total_eps/elapsed:.1f} ep/s")
+
+            if multitask_score > best_base_multitask_score:
+                best_base_multitask_score = multitask_score
+                best_base_model_state = copy.deepcopy(baseline_model.state_dict())
+                base_evals_since_best = 0
+            else:
+                base_evals_since_best += 1
+
+            if best_base_multitask_score >= 10.0 and base_evals_since_best >= 10 and total_eps > total_base_interleaved_eps * 0.7:
+                print(f"  [baseline multi-task early stop: best_score={best_base_multitask_score:.2f}, "
+                      f"current={multitask_score:.2f}, restoring best]")
+                baseline_model.load_state_dict(best_base_model_state)
+                break
+
+        base_rollout_idx += 1
+
+    if base_evals_since_best > 0:
+        print(f"  [restoring best baseline model: score={best_base_multitask_score:.2f}]")
+        baseline_model.load_state_dict(best_base_model_state)
+
     baseline_models = {}
     for task in cfg.tasks:
-        base_trainer = BaselineTrainer(cfg, task)
-        base_results = train_on_task(
-            base_trainer, cfg, task, cfg.train.total_episodes, f"baseline"
+        final_eval = evaluate_model(
+            baseline_model, cfg, task,
+            num_episodes=cfg.train.num_eval_episodes,
+            is_augmented=False,
         )
-        baseline_models[task] = base_trainer.model
-        all_results[task]["baseline"] = base_results
+        print(f"  ✓ baseline on {task}: success_rate={final_eval['success_rate']:.3f}")
+        baseline_models[task] = baseline_model
+        all_results[task]["baseline"] = {
+            "history": dict(base_task_history[task]),
+            "eval_history": base_task_eval_history[task],
+            "final": final_eval,
+        }
 
     # ── Generate training comparison plots ──
     print("\n" + "=" * 70)

@@ -2,209 +2,209 @@
   "multitask": {
     "augmented": {
       "morris_water_maze": {
-        "success_rate": 1.0,
-        "avg_episode_length": 9.15,
-        "avg_reward": 0.9185,
-        "std_reward": 0.055197373125901554,
-        "strategy_entropy": 1.4189258944159646,
+        "success_rate": 0.19,
+        "avg_episode_length": 245.17,
+        "avg_reward": -2.259799999999983,
+        "std_reward": 1.5288269882494798,
+        "strategy_entropy": 0.6404400611370021,
         "strategy_distribution": {
-          "EXPLORE": 0.30601092896174864,
-          "APPROACH": 0.3912568306010929,
-          "AVOID": 0.07759562841530054,
-          "EXPLOIT": 0.12131147540983607,
-          "MEMORIZE": 0.10382513661202186
+          "EXPLORE": 0.7227230085246972,
+          "APPROACH": 0.26544846433087244,
+          "AVOID": 0.00024472814781580126,
+          "EXPLOIT": 0.011583798996614594,
+          "MEMORIZE": 0.0
         }
       },
       "visual_foraging": {
-        "success_rate": 0.96,
-        "avg_episode_length": 21.82,
-        "avg_reward": 1.2728000000000002,
-        "std_reward": 0.7426346073271826,
-        "strategy_entropy": 1.4628729720833817,
+        "success_rate": 0.59,
+        "avg_episode_length": 124.53,
+        "avg_reward": -0.3412999999999951,
+        "std_reward": 1.9478165493700828,
+        "strategy_entropy": 0.7051397508523883,
         "strategy_distribution": {
-          "EXPLORE": 0.4321723189734189,
-          "APPROACH": 0.17873510540788268,
-          "AVOID": 0.11228230980751604,
-          "EXPLOIT": 0.1310724106324473,
-          "MEMORIZE": 0.1457378551787351
+          "EXPLORE": 0.7208704729783988,
+          "APPROACH": 0.2532723038625231,
+          "AVOID": 0.011001365132899702,
+          "EXPLOIT": 0.0046575122460451295,
+          "MEMORIZE": 0.010198345780133301
         }
       },
       "dynamic_obstacles": {
-        "success_rate": 0.87,
-        "avg_episode_length": 43.64,
-        "avg_reward": 0.36359999999999987,
-        "std_reward": 0.5188111795248828,
-        "strategy_entropy": 1.4514763519471445,
+        "success_rate": 0.84,
+        "avg_episode_length": 114.24,
+        "avg_reward": -0.3429999999999987,
+        "std_reward": 0.9651554278974926,
+        "strategy_entropy": 0.8466026800469014,
         "strategy_distribution": {
-          "EXPLORE": 0.3952795600366636,
-          "APPROACH": 0.26741521539871677,
-          "AVOID": 0.08661778185151238,
-          "EXPLOIT": 0.11663611365719523,
-          "MEMORIZE": 0.134051329055912
+          "EXPLORE": 0.5991771708683473,
+          "APPROACH": 0.3592436974789916,
+          "AVOID": 0.011467086834733893,
+          "EXPLOIT": 0.023984593837535016,
+          "MEMORIZE": 0.006127450980392157
         }
       },
       "visual_search": {
-        "success_rate": 0.35,
-        "avg_episode_length": 221.85,
-        "avg_reward": -1.8649999999999864,
-        "std_reward": 1.632010723003979,
-        "strategy_entropy": 1.444710843150575,
+        "success_rate": 0.19,
+        "avg_episode_length": 246.65,
+        "avg_reward": -2.274599999999983,
+        "std_reward": 1.4999636128919849,
+        "strategy_entropy": 0.6917809894436693,
         "strategy_distribution": {
-          "EXPLORE": 0.40928555330178046,
-          "APPROACH": 0.2493576741041244,
-          "AVOID": 0.09808429118773947,
-          "EXPLOIT": 0.09159341897678612,
-          "MEMORIZE": 0.15167906242956952
+          "EXPLORE": 0.4738698560713562,
+          "APPROACH": 0.5261301439286439,
+          "AVOID": 0.0,
+          "EXPLOIT": 0.0,
+          "MEMORIZE": 0.0
         }
       }
     },
     "baseline": {
       "morris_water_maze": {
-        "success_rate": 0.87,
-        "avg_episode_length": 46.35,
-        "avg_reward": 0.41520000000000257,
-        "std_reward": 1.320862203259667
+        "success_rate": 0.32,
+        "avg_episode_length": 206.88,
+        "avg_reward": -1.745599999999986,
+        "std_reward": 1.8288298553993385
       },
       "visual_foraging": {
-        "success_rate": 0.64,
-        "avg_episode_length": 107.34,
-        "avg_reward": -0.04139999999999493,
-        "std_reward": 2.0157668615194497
+        "success_rate": 0.75,
+        "avg_episode_length": 83.57,
+        "avg_reward": 0.3853000000000031,
+        "std_reward": 1.747917306396381
       },
       "dynamic_obstacles": {
-        "success_rate": 0.89,
-        "avg_episode_length": 112.31,
-        "avg_reward": -0.23399999999999835,
-        "std_reward": 1.0680187264275798
+        "success_rate": 0.64,
+        "avg_episode_length": 111.5,
+        "avg_reward": -0.5273999999999952,
+        "std_reward": 1.5082165759598243
       },
       "visual_search": {
-        "success_rate": 0.06,
-        "avg_episode_length": 282.56,
-        "avg_reward": -2.764999999999982,
-        "std_reward": 0.9301747147713653
+        "success_rate": 0.11,
+        "avg_episode_length": 268.13,
+        "avg_reward": -2.5701999999999816,
+        "std_reward": 1.222671648481302
       }
     },
-    "augmented_avg_success": 0.795,
-    "baseline_avg_success": 0.615,
-    "generalizability_delta": 0.18000000000000005
+    "augmented_avg_success": 0.4525,
+    "baseline_avg_success": 0.455,
+    "generalizability_delta": -0.0025000000000000022
   },
   "zero_shot_transfer": {
     "augmented": {
       "morris_water_maze": {
-        "mean_success": 1.0,
-        "std_success": 0.0
+        "mean_success": 0.22200000000000003,
+        "std_success": 0.007483314773547889
       },
       "visual_foraging": {
-        "mean_success": 0.944,
-        "std_success": 0.01356465996625051
+        "mean_success": 0.628,
+        "std_success": 0.054918120870983904
       },
       "dynamic_obstacles": {
-        "mean_success": 0.828,
-        "std_success": 0.05564171097297423
+        "mean_success": 0.852,
+        "std_success": 0.029257477676655572
       },
       "visual_search": {
-        "mean_success": 0.378,
-        "std_success": 0.023151673805580437
+        "mean_success": 0.10200000000000001,
+        "std_success": 0.021354156504062624
       }
     },
     "baseline": {
       "morris_water_maze": {
-        "mean_success": 0.892,
-        "std_success": 0.03762977544445359
+        "mean_success": 0.42800000000000005,
+        "std_success": 0.03709447398198282
       },
       "visual_foraging": {
-        "mean_success": 0.6439999999999999,
-        "std_success": 0.058514955353311165
+        "mean_success": 0.7380000000000001,
+        "std_success": 0.03187475490101848
       },
       "dynamic_obstacles": {
-        "mean_success": 0.8360000000000001,
-        "std_success": 0.050833060108555345
+        "mean_success": 0.5820000000000001,
+        "std_success": 0.04915282290977803
       },
       "visual_search": {
-        "mean_success": 0.034,
-        "std_success": 0.013564659966250536
+        "mean_success": 0.1,
+        "std_success": 0.017888543819998316
       }
     }
   },
   "few_shot_adaptation": {
     "augmented": {
       "episodes_to_threshold": 20,
-      "final_success_rate": 1.0,
+      "final_success_rate": 0.9,
       "reached_threshold": true
     },
     "baseline": {
       "episodes_to_threshold": 20,
-      "final_success_rate": 1.0,
+      "final_success_rate": 0.75,
       "reached_threshold": true
     }
   },
   "catastrophic_forgetting": {
     "morris_water_maze": {
-      "before": 1.0,
-      "after": 1.0,
+      "before": 0.23,
+      "after": 0.32,
       "forgetting": 0
     },
     "visual_foraging": {
-      "before": 0.95,
-      "after": 0.92,
-      "forgetting": 0.029999999999999916
+      "before": 0.66,
+      "after": 0.63,
+      "forgetting": 0.030000000000000027
     },
     "dynamic_obstacles": {
-      "before": 0.84,
-      "after": 0.77,
-      "forgetting": 0.06999999999999995
+      "before": 0.82,
+      "after": 0.78,
+      "forgetting": 0.039999999999999925
     },
     "visual_search": {
-      "before": 0.37,
-      "after": 0.39,
+      "before": 0.09,
+      "after": 0.14,
       "forgetting": 0
     },
-    "avg_forgetting": 0.024999999999999967
+    "avg_forgetting": 0.017499999999999988
   },
   "strategy_diversity": {
     "morris_water_maze": {
-      "strategy_entropy": 1.4288049263543172,
+      "strategy_entropy": 0.6076420292824705,
       "strategy_distribution": {
-        "EXPLORE": 0.29109947643979056,
-        "APPROACH": 0.3863874345549738,
-        "AVOID": 0.06387434554973823,
-        "EXPLOIT": 0.14764397905759163,
-        "MEMORIZE": 0.11099476439790576
+        "EXPLORE": 0.7054041531527737,
+        "APPROACH": 0.29442736194768543,
+        "AVOID": 0.0,
+        "EXPLOIT": 0.0,
+        "MEMORIZE": 0.00016848489954087866
       },
-      "success_rate": 1.0
+      "success_rate": 0.22
     },
     "visual_foraging": {
-      "strategy_entropy": 1.4184616712271985,
+      "strategy_entropy": 0.6214701651098734,
       "strategy_distribution": {
-        "EXPLORE": 0.4639175257731959,
-        "APPROACH": 0.18170103092783504,
-        "AVOID": 0.09192439862542956,
-        "EXPLOIT": 0.13530927835051546,
-        "MEMORIZE": 0.12714776632302405
+        "EXPLORE": 0.7392645709997498,
+        "APPROACH": 0.2508963562077879,
+        "AVOID": 0.0026682231301592596,
+        "EXPLOIT": 0.00717084966230301,
+        "MEMORIZE": 0.0
       },
-      "success_rate": 0.95
+      "success_rate": 0.65
     },
     "dynamic_obstacles": {
-      "strategy_entropy": 1.4320534122418023,
+      "strategy_entropy": 0.7837806841207003,
       "strategy_distribution": {
-        "EXPLORE": 0.4123401053423627,
-        "APPROACH": 0.2658640581891146,
-        "AVOID": 0.09004263857536995,
-        "EXPLOIT": 0.1018309505894156,
-        "MEMORIZE": 0.12992224730373714
+        "EXPLORE": 0.6274714746102256,
+        "APPROACH": 0.34517899137705776,
+        "AVOID": 0.006445431582614755,
+        "EXPLOIT": 0.01646198066370525,
+        "MEMORIZE": 0.004442121766396656
       },
-      "success_rate": 0.84
+      "success_rate": 0.87
     },
     "visual_search": {
-      "strategy_entropy": 1.4688184164978608,
+      "strategy_entropy": 0.6893886805619907,
       "strategy_distribution": {
-        "EXPLORE": 0.37221344088951874,
-        "APPROACH": 0.2755763885103832,
-        "AVOID": 0.10023437074181064,
-        "EXPLOIT": 0.09690957649752004,
-        "MEMORIZE": 0.15506622336076742
+        "EXPLORE": 0.5433231396534148,
+        "APPROACH": 0.4566768603465851,
+        "AVOID": 0.0,
+        "EXPLOIT": 0.0,
+        "MEMORIZE": 0.0
       },
-      "success_rate": 0.48
+      "success_rate": 0.16
     }
   }
 }

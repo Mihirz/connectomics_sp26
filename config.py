@@ -126,7 +126,6 @@ class TrainConfig:
     # productive purely from whether they avoid failure and generate useful
     # intrinsic signals.
     failure_penalty: float = -1.0      # Given on episode timeout or catastrophic failure
-    success_signal: float = 0.5        # Small positive sparse signal on success (meta-controller)
 
     # ── Meta-controller intrinsic feedback ──
     # The meta-controller also receives a fraction of the selected sub-objective's

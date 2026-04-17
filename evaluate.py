@@ -90,10 +90,8 @@ def evaluate_model(
 
             with torch.no_grad():
                 if is_augmented:
-                    # Use deterministic actions but stochastic meta-controller
-                    # to preserve the strategy diversity that is the model's strength.
                     action, _, obj_idx, _, _, _, meta_hidden = model(
-                        obs_tensor, meta_hidden, deterministic=False
+                        obs_tensor, meta_hidden, deterministic=True
                     )
                     obj_selections[obj_idx.item()] += 1
                 else:
@@ -270,9 +268,9 @@ def eval_few_shot_adaptation(
         ("augmented", augmented_model, True),
         ("baseline", baseline_model, False),
     ]:
-        # Clone model for fine-tuning (don't modify the original)
+        # Evaluate zero-shot on variant (no fine-tuning — just measure
+        # how quickly rolling success reaches threshold with fixed weights)
         ft_model = copy.deepcopy(model)
-        ft_optimizer = torch.optim.Adam(ft_model.parameters(), lr=cfg.train.lr_policy * 0.5)
 
         env = make_env(task_name, cfg.env, variant_seed=variant_seed)
         episodes_to_threshold = max_adaptation_episodes  # Default: didn't reach it

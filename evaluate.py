@@ -366,9 +366,9 @@ def eval_strategy_diversity(
     Analyze which sub-objectives the meta-controller selects for each task.
 
     We expect to see different strategy distributions for different tasks:
-    - Morris maze: heavy EXPLORE early, then MEMORIZE/EXPLOIT
-    - Foraging: mix of APPROACH (food) and AVOID (predators)
-    - Obstacles: AVOID and APPROACH
+    - Morris maze: heavy EXPLORE early, then EXPLOIT near platform
+    - Foraging: mix of EXPLORE and APPROACH (food)
+    - Obstacles: APPROACH (goal-directed) and EXPLORE
     - Visual search: EXPLORE or APPROACH (depending on cue presence)
 
     If the augmented model shows task-appropriate strategy selection, it

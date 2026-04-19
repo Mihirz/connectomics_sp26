@@ -38,13 +38,15 @@ from config import SubObjectiveConfig
 
 # Integer IDs for each sub-objective (used as indices into the meta-controller's
 # output distribution).
+# Reduced from 5 to 3: removed AVOID (consistently <5% usage, only fires in
+# threat tasks) and MEMORIZE (0-18% usage, patrol mode too niche).  Fewer
+# sub-objectives means each mode gets 1/3 of training data instead of 1/5,
+# and meta-controller credit assignment is simpler (3 choices vs 5).
 EXPLORE  = 0   # Curiosity-driven exploration of novel states
 APPROACH = 1   # Goal-directed movement toward salient targets
-AVOID    = 2   # Threat avoidance
-EXPLOIT  = 3   # Repeat previously successful patterns
-MEMORIZE = 4   # Build and use spatial memory
+EXPLOIT  = 2   # Stay near goal / repeat previously successful patterns
 
-SUB_OBJ_NAMES = ["EXPLORE", "APPROACH", "AVOID", "EXPLOIT", "MEMORIZE"]
+SUB_OBJ_NAMES = ["EXPLORE", "APPROACH", "EXPLOIT"]
 NUM_SUB_OBJECTIVES = len(SUB_OBJ_NAMES)
 
 
@@ -65,12 +67,14 @@ class IntrinsicRewardComputer:
     def __init__(self, cfg: SubObjectiveConfig):
         self.cfg = cfg
         # Track state for stateful sub-objectives
-        self.exploit_success_map = {}  # (r,c) → cumulative success at that location
+        self.reward_history = {}        # (r,c) → cumulative dense reward at that location
         self.spatial_memory = None      # Will be initialized on first call
+        self.grid_size = 0
 
     def reset(self, grid_size: int):
         """Reset per-episode state for stateful sub-objectives."""
-        self.exploit_success_map = {}
+        self.reward_history = {}
+        self.grid_size = grid_size
         self.spatial_memory = np.zeros((grid_size, grid_size), dtype=np.float32)
 
     def compute_all(self, reward_info: Dict) -> np.ndarray:
@@ -84,9 +88,7 @@ class IntrinsicRewardComputer:
         return np.array([
             self._explore_reward(reward_info),
             self._approach_reward(reward_info),
-            self._avoid_reward(reward_info),
             self._exploit_reward(reward_info),
-            self._memorize_reward(reward_info),
         ], dtype=np.float32)
 
     # ── EXPLORE ──────────────────────────────────────────────────────────────
@@ -115,71 +117,22 @@ class IntrinsicRewardComputer:
         else:
             return -self.cfg.approach_reward * 0.3 * min(abs(delta), 1.0)
 
-    # ── AVOID ────────────────────────────────────────────────────────────────
-    # Biological analogue: amygdala-driven fear/avoidance.
-    # Rewards increasing distance from the nearest threat.
-    # Critical in foraging and obstacle tasks.
-
-    def _avoid_reward(self, info: Dict) -> float:
-        if not info.get("threat_nearby", False):
-            return 0.0  # No threat → no avoidance reward needed
-
-        threat_dist = info.get("threat_dist", float("inf"))
-        if threat_dist < 3.0:
-            # Close threat: strong avoidance reward for increasing distance
-            return self.cfg.avoid_reward * (3.0 - threat_dist) / 3.0
-        elif threat_dist < 6.0:
-            # Medium threat: mild avoidance signal to maintain safe distance
-            return self.cfg.avoid_reward * 0.2
-        return 0.0
-
     # ── EXPLOIT ──────────────────────────────────────────────────────────────
     # Biological analogue: habit formation via dorsal striatum.
-    # Rewards revisiting locations where the agent previously found rewards
-    # (food collected, goal reached) or taking actions that led to success.
+    # "Stay and harvest" mode — rewards proximity to the goal/target.
+    # Distinct from APPROACH (which rewards movement toward target):
+    # EXPLOIT rewards BEING near the target, encouraging the agent to
+    # remain and collect rather than keep moving.
 
     def _exploit_reward(self, info: Dict) -> float:
-        pos = tuple(info["agent_pos"])
-
-        # Update success map if something good happened
-        if info.get("food_collected", False) or info.get("success", False):
-            self.exploit_success_map[pos] = self.exploit_success_map.get(pos, 0) + 1.0
-
-        # Reward for being at a previously successful location
-        if pos in self.exploit_success_map:
-            return self.cfg.exploit_reward * min(self.exploit_success_map[pos], 3.0) / 3.0
+        dist = info.get("dist_to_goal", float("inf"))
+        if dist <= 3.0:
+            # Strong reward for being very close — "harvest this area"
+            return self.cfg.exploit_reward * (3.0 - dist) / 3.0
+        elif dist <= 6.0:
+            # Mild reward for being in the neighborhood
+            return self.cfg.exploit_reward * 0.15
         return 0.0
-
-    # ── MEMORIZE ─────────────────────────────────────────────────────────────
-    # Biological analogue: hippocampal place cell consolidation.
-    # Rewards the agent for systematically building a spatial map and using it.
-    # The agent gets rewarded for covering the space evenly (building the map)
-    # and for efficiently re-navigating to remembered locations.
-
-    def _memorize_reward(self, info: Dict) -> float:
-        pos = info["agent_pos"]
-        step = info["step"]
-
-        if self.spatial_memory is None:
-            return 0.0
-
-        r, c = pos[0], pos[1]
-
-        # Reward for filling in the spatial memory map
-        if self.spatial_memory[r, c] == 0:
-            self.spatial_memory[r, c] = step  # Record when this cell was first visited
-            # Reward proportional to how much of the map we've covered
-            coverage = np.count_nonzero(self.spatial_memory) / self.spatial_memory.size
-            return self.cfg.memorize_reward * coverage
-
-        # Small reward for efficiently using memory (revisiting after a gap)
-        time_since_visit = step - self.spatial_memory[r, c]
-        if time_since_visit > 20:
-            self.spatial_memory[r, c] = step
-            return self.cfg.memorize_reward * 0.5
-
-        return 0.0
-
 
 class SubObjectiveEmbedding(nn.Module):
     """

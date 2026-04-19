@@ -65,13 +65,12 @@ class ModelConfig:
 
     # ── Meta-controller (PFC analogue) — augmented model only ──
     # Outputs a categorical distribution over K sub-objectives.
-    num_sub_objectives: int = 5    # EXPLORE, APPROACH, AVOID, EXPLOIT, MEMORIZE
+    num_sub_objectives: int = 3    # EXPLORE, APPROACH, EXPLOIT
     meta_hidden_dim: int = 64      # Smaller network; this is a "selector", not a policy
-    objective_embed_dim: int = 16  # Embedding size per sub-objective
+    objective_embed_dim: int = 32  # Embedding size per sub-objective (11% of conditioned dim)
 
     # ── Memory module (augmented model) ──
     # A small spatial memory buffer the model can write to and read from.
-    # This supports the MEMORIZE sub-objective.
     memory_size: int = 64          # Number of memory slots
 
 
@@ -85,13 +84,13 @@ class TrainConfig:
     # We use Proximal Policy Optimization for both models because it is stable,
     # sample-efficient, and well-understood.
     lr_policy: float = 3e-4             # Learning rate for action policy
-    lr_meta: float = 3e-4              # Learning rate for meta-controller
+    lr_meta: float = 1e-4              # Slower than policy — lets policy stabilize before meta shifts
     gamma: float = 0.99                 # Discount factor
     gae_lambda: float = 0.95           # GAE parameter
     clip_epsilon: float = 0.2          # PPO clipping
     entropy_coef: float = 0.01         # Entropy bonus for action policy
     meta_entropy_coef: float = 0.15    # Higher entropy for meta-controller (encourage exploration of strategies)
-    meta_entropy_floor: float = 0.4    # If obj_entropy drops below this, apply 10x stronger entropy bonus
+    meta_entropy_floor: float = 0.4    # If obj_entropy drops below this, apply stronger entropy bonus
     value_loss_coef: float = 0.5
     max_grad_norm: float = 0.5
 
@@ -101,7 +100,7 @@ class TrainConfig:
     # the action policy time to execute a coherent strategy and reduces the
     # meta-controller's credit assignment from ~300 decisions to ~20 per episode.
     # Biologically: PFC executive control operates on seconds, not milliseconds.
-    meta_decision_interval: int = 8    # Steps between meta-controller decisions
+    meta_decision_interval: int = 16   # Steps between meta-controller decisions (~18/episode, easier credit assignment)
 
     # ── Rollout settings ──
     # These are deliberately small to fit in ≤ 8 GB VRAM.
@@ -161,11 +160,10 @@ class TrainConfig:
 class SubObjectiveConfig:
     # Intrinsic reward magnitudes for each sub-objective.
     # These are the "self-generated" reward signals the augmented model uses.
+    # Reduced to 3 sub-objectives: EXPLORE, APPROACH, EXPLOIT.
     explore_reward: float = 0.1        # Reward for visiting a new cell
     approach_reward: float = 0.15      # Reward for decreasing distance to salient object
-    avoid_reward: float = 0.15         # Reward for increasing distance from threat
-    exploit_reward: float = 0.2        # Reward for repeating a previously rewarded action
-    memorize_reward: float = 0.1       # Reward for correctly using spatial memory
+    exploit_reward: float = 0.2        # Reward for proximity to goal ("stay and harvest")
 
     # Decay factors
     explore_novelty_decay: float = 0.99  # How quickly visited cells become "boring"

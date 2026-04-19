@@ -154,10 +154,14 @@ class AugmentedModel(nn.Module):
         1. Encode observation → latent state
         2. Meta-controller selects sub-objective from latent state
         3. Look up sub-objective embedding
-        4. Concatenate [latent; embedding] → conditioned state
+        4. Concatenate [latent; embedding] to condition the policy
         5. Policy head → action distribution
         6. Value head → state value (for intrinsic rewards)
         7. Meta-value head → state value (for sparse extrinsic reward)
+
+    Conditioning uses concatenation: [latent_256; embed_32] = 288-dim input.
+    The 32-dim embedding is ~11% of the conditioned vector, large enough
+    for the policy to differentiate modes without fragmenting the latent space.
     """
 
     def __init__(self, model_cfg: ModelConfig, env_cfg: EnvConfig):
@@ -175,15 +179,17 @@ class AugmentedModel(nn.Module):
         # ── Sub-objective embeddings ──
         self.obj_embeddings = nn.Embedding(model_cfg.num_sub_objectives, model_cfg.objective_embed_dim)
 
-        # ── Action policy (conditioned on sub-objective) ──
+        # ── Conditioned dimension: latent + embedding ──
         conditioned_dim = model_cfg.latent_dim + model_cfg.objective_embed_dim
+
+        # ── Action policy (takes [latent; embedding]) ──
         self.policy_head = nn.Sequential(
             nn.Linear(conditioned_dim, model_cfg.hidden_dim),
             nn.ReLU(),
             nn.Linear(model_cfg.hidden_dim, env_cfg.num_actions),
         )
 
-        # ── Value head (estimates value under intrinsic rewards) ──
+        # ── Value head (also conditioned — value depends on active sub-objective) ──
         self.value_head = nn.Sequential(
             nn.Linear(conditioned_dim, model_cfg.hidden_dim),
             nn.ReLU(),
@@ -199,6 +205,11 @@ class AugmentedModel(nn.Module):
             nn.ReLU(),
             nn.Linear(model_cfg.meta_hidden_dim, 1),
         )
+
+    def _condition(self, latent: torch.Tensor, obj_idx: torch.Tensor) -> torch.Tensor:
+        """Concatenate latent state with sub-objective embedding."""
+        obj_embed = self.obj_embeddings(obj_idx)
+        return torch.cat([latent, obj_embed], dim=-1)
 
     def init_meta_hidden(self, batch_size: int) -> torch.Tensor:
         """Initialize GRU hidden state for the meta-controller."""
@@ -244,11 +255,8 @@ class AugmentedModel(nn.Module):
             obj_idx = obj_dist.sample()
         obj_logprob = obj_dist.log_prob(obj_idx)
 
-        # Step 3: Look up sub-objective embedding
-        obj_embed = self.obj_embeddings(obj_idx)
-
-        # Step 4: Condition policy on sub-objective
-        conditioned = torch.cat([latent, obj_embed], dim=-1)
+        # Step 3 & 4: Concatenate latent with sub-objective embedding
+        conditioned = self._condition(latent, obj_idx)
 
         # Step 5: Action distribution
         action_logits = self.policy_head(conditioned)
@@ -290,9 +298,8 @@ class AugmentedModel(nn.Module):
         obj_logprob = obj_dist.log_prob(obj_indices)
         obj_entropy = obj_dist.entropy()
 
-        # Conditioned policy
-        obj_embed = self.obj_embeddings(obj_indices)
-        conditioned = torch.cat([latent, obj_embed], dim=-1)
+        # Concatenation-conditioned policy
+        conditioned = self._condition(latent, obj_indices)
         action_logits = self.policy_head(conditioned)
         action_dist = Categorical(logits=action_logits)
         action_logprob = action_dist.log_prob(actions)
@@ -334,7 +341,7 @@ class BaselineModel(nn.Module):
         # 2-layer heads (same depth as augmented model's heads) with a wider
         # hidden dim to compensate for the missing meta-controller, embeddings,
         # and meta-value head.  Target: roughly match augmented param count.
-        wider_hidden = model_cfg.hidden_dim + 160  # ~288 to match augmented GRU param count
+        wider_hidden = model_cfg.hidden_dim + 168  # ~296 to match augmented GRU + concat param count
 
         self.policy_head = nn.Sequential(
             nn.Linear(model_cfg.latent_dim, wider_hidden),

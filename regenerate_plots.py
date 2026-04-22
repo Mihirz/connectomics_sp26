@@ -90,18 +90,20 @@ def plot_strategy_distribution(reports):
     dist /= len(SEEDS)
     entropies /= len(SEEDS)
 
-    fig, axes = plt.subplots(1, len(TASKS), figsize=(4.5 * len(TASKS), 4), sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=(11, 9), sharey=True)
     colors = ["#8DA0CB", "#FC8D62", "#66C2A5"]
-    for ax, label, ti in zip(axes, TASK_LABELS, range(len(TASKS))):
+    axes_flat = axes.flatten()
+    for ax, label, ti in zip(axes_flat, TASK_LABELS, range(len(TASKS))):
         ax.bar(SUB_OBJS, dist[ti], color=colors, edgecolor="black", linewidth=0.6)
-        ax.set_title(f"{label}\n(entropy = {entropies[ti]:.2f})")
+        ax.set_title(f"{label}\n(entropy = {entropies[ti]:.2f})", fontsize=12)
         ax.set_ylim(0, 1)
         ax.grid(True, axis="y", alpha=0.3)
         for i, v in enumerate(dist[ti]):
-            ax.text(i, v + 0.02, f"{v:.2f}", ha="center", fontsize=9)
-    axes[0].set_ylabel("Selection Frequency")
+            ax.text(i, v + 0.02, f"{v:.2f}", ha="center", fontsize=10)
+    axes[0, 0].set_ylabel("Selection Frequency")
+    axes[1, 0].set_ylabel("Selection Frequency")
     fig.suptitle("Meta-Controller Strategy Distribution per Task (3-seed avg)",
-                 fontsize=13, fontweight="bold")
+                 fontsize=14, fontweight="bold")
     plt.tight_layout()
     out = os.path.join(OUT_DIR, "strategy_distribution.png")
     plt.savefig(out, dpi=150, bbox_inches="tight")

@@ -40,7 +40,7 @@ def plot_final_comparison(reports):
 
     x = np.arange(len(TASKS))
     width = 0.35
-    fig, ax = plt.subplots(figsize=(11, 5.5))
+    fig, ax = plt.subplots(figsize=(12, 6.2))
     b1 = ax.bar(x - width / 2, aug_mean, width, yerr=aug_std, capsize=4,
                 label="Augmented (PFC)", color=AUG_COLOR, edgecolor="black", linewidth=0.6)
     b2 = ax.bar(x + width / 2, base_mean, width, yerr=base_std, capsize=4,
@@ -51,22 +51,25 @@ def plot_final_comparison(reports):
     ax.set_title("Multi-task Success Rate (3-seed avg, error bars = std)")
     ax.set_xticks(x)
     ax.set_xticklabels(TASK_LABELS, rotation=15, ha="right")
-    ax.set_ylim(0, 1.05)
-    ax.legend(loc="upper right")
+    ax.set_ylim(0, 1.30)
+    ax.legend(loc="upper right", framealpha=0.95)
     ax.grid(True, axis="y", alpha=0.3)
 
-    for bars, means in [(b1, aug_mean), (b2, base_mean)]:
-        for bar, m in zip(bars, means):
-            ax.annotate(f"{m:.2f}", xy=(bar.get_x() + bar.get_width() / 2, m),
-                        xytext=(0, 6), textcoords="offset points", ha="center", fontsize=9)
+    for bars, means, stds in [(b1, aug_mean, aug_std), (b2, base_mean, base_std)]:
+        for bar, m, s in zip(bars, means, stds):
+            ax.annotate(f"{m:.2f}",
+                        xy=(bar.get_x() + bar.get_width() / 2, m + s),
+                        xytext=(0, 8), textcoords="offset points",
+                        ha="center", fontsize=10, fontweight="bold")
 
     overall_aug = aug_mean.mean()
     overall_base = base_mean.mean()
-    ax.text(0.02, 0.97,
+    ax.text(0.5, 1.16,
             f"Overall: Augmented {overall_aug:.3f}  vs  Baseline {overall_base:.3f}  "
             f"(+{(overall_aug - overall_base) * 100:.1f}%)",
-            transform=ax.transAxes, va="top", fontsize=10,
-            bbox=dict(boxstyle="round", facecolor="white", alpha=0.85, edgecolor="gray"))
+            transform=ax.transAxes, ha="center", va="center", fontsize=11,
+            bbox=dict(boxstyle="round,pad=0.5", facecolor="#f5f5f5",
+                      alpha=0.95, edgecolor="gray"))
 
     plt.tight_layout()
     out = os.path.join(OUT_DIR, "final_comparison.png")

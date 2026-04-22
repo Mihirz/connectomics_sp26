@@ -1,0 +1,129 @@
+Device: cuda
+GPU: NVIDIA GeForce RTX 4070 SUPER
+VRAM: 11.6 GB
+
+🔬 FULL EXPERIMENT — All tasks, both models
+
+============================================================
+MODEL PARAMETER COMPARISON
+============================================================
+  Augmented (PFC) model: 227,068 parameters
+  Baseline (Fixed) model: 227,430 parameters
+  Ratio: 1.00x
+  Difference: 362 params
+============================================================
+  Estimated VRAM (model + optimizer):
+    Augmented: ~2.6 MB
+    Baseline:  ~2.6 MB
+    Combined:  ~5.2 MB
+============================================================
+
+======================================================================
+PHASE 1: TRAINING
+======================================================================
+
+  Interleaved training from scratch (shared optimizer)...
+  [interleaved] total_eps≈990 | morr=0.17 | visu=0.37 | dyna=0.87 | visu=0.13 | above25=2 | score=5.53 | obj_ent=1.326 | 8.9 ep/s
+  [interleaved] total_eps≈1973 | morr=0.37 | visu=0.50 | dyna=0.57 | visu=0.03 | above25=3 | score=7.47 | obj_ent=1.321 | 8.8 ep/s
+  [interleaved] total_eps≈2956 | morr=0.10 | visu=0.33 | dyna=0.53 | visu=0.07 | above25=2 | score=5.03 | obj_ent=1.304 | 8.8 ep/s
+  [interleaved] total_eps≈3939 | morr=0.33 | visu=0.60 | dyna=0.77 | visu=0.17 | above25=3 | score=7.87 | obj_ent=1.394 | 8.8 ep/s
+  [interleaved] total_eps≈4922 | morr=0.27 | visu=0.60 | dyna=0.77 | visu=0.13 | above25=3 | score=7.77 | obj_ent=1.362 | 8.9 ep/s
+  [interleaved] total_eps≈5905 | morr=0.17 | visu=0.57 | dyna=0.27 | visu=0.07 | above25=2 | score=5.07 | obj_ent=1.286 | 8.8 ep/s
+  [interleaved] total_eps≈6888 | morr=0.47 | visu=0.70 | dyna=0.77 | visu=0.07 | above25=3 | score=8.00 | obj_ent=1.175 | 8.9 ep/s
+  [interleaved] total_eps≈7871 | morr=0.17 | visu=0.47 | dyna=0.60 | visu=0.10 | above25=2 | score=5.33 | obj_ent=1.329 | 8.9 ep/s
+  [interleaved] total_eps≈8854 | morr=0.20 | visu=0.47 | dyna=0.83 | visu=0.07 | above25=2 | score=5.57 | obj_ent=1.315 | 8.9 ep/s
+  [interleaved] total_eps≈9837 | morr=0.23 | visu=0.43 | dyna=0.57 | visu=0.13 | above25=2 | score=5.37 | obj_ent=1.309 | 8.8 ep/s
+  [interleaved] total_eps≈10820 | morr=0.07 | visu=0.67 | dyna=0.70 | visu=0.07 | above25=2 | score=5.50 | obj_ent=1.133 | 8.8 ep/s
+  [interleaved] total_eps≈11803 | morr=0.27 | visu=0.67 | dyna=0.67 | visu=0.03 | above25=3 | score=7.63 | obj_ent=1.115 | 8.8 ep/s
+  [interleaved] total_eps≈12786 | morr=0.20 | visu=0.57 | dyna=0.73 | visu=0.07 | above25=2 | score=5.57 | obj_ent=1.209 | 8.8 ep/s
+  [interleaved] total_eps≈13769 | morr=0.30 | visu=0.57 | dyna=0.90 | visu=0.07 | above25=3 | score=7.83 | obj_ent=1.240 | 8.9 ep/s
+  [interleaved] total_eps≈14752 | morr=0.27 | visu=0.67 | dyna=0.63 | visu=0.07 | above25=3 | score=7.63 | obj_ent=1.098 | 8.9 ep/s
+  [interleaved] total_eps≈15735 | morr=0.37 | visu=0.67 | dyna=0.83 | visu=0.03 | above25=3 | score=7.90 | obj_ent=1.237 | 8.9 ep/s
+  [interleaved] total_eps≈16719 | morr=0.30 | visu=0.67 | dyna=0.73 | visu=0.03 | above25=3 | score=7.73 | obj_ent=1.284 | 8.9 ep/s
+  [interleaved] total_eps≈17702 | morr=0.20 | visu=0.63 | dyna=0.90 | visu=0.10 | above25=2 | score=5.83 | obj_ent=1.234 | 8.9 ep/s
+  [interleaved] total_eps≈18685 | morr=0.27 | visu=0.60 | dyna=0.57 | visu=0.10 | above25=3 | score=7.53 | obj_ent=1.123 | 8.9 ep/s
+  [interleaved] total_eps≈19668 | morr=0.23 | visu=0.67 | dyna=0.80 | visu=0.20 | above25=2 | score=5.90 | obj_ent=1.065 | 8.9 ep/s
+  [restoring best model: sum=8.00]
+  ✓ augmented on morris_water_maze: success_rate=0.250
+  ✓ augmented on visual_foraging: success_rate=0.540
+  ✓ augmented on dynamic_obstacles: success_rate=0.650
+  ✓ augmented on visual_search: success_rate=0.120
+
+  Interleaved baseline training (shared model)...
+  [baseline-interleaved] total_eps≈990 | morr=0.07 | visu=0.33 | dyna=0.37 | visu=0.10 | above25=2 | score=4.87 | 13.2 ep/s
+  [baseline-interleaved] total_eps≈1973 | morr=0.20 | visu=0.37 | dyna=0.10 | visu=0.07 | above25=1 | score=2.73 | 13.2 ep/s
+  [baseline-interleaved] total_eps≈2956 | morr=0.20 | visu=0.47 | dyna=0.27 | visu=0.13 | above25=2 | score=5.07 | 13.3 ep/s
+  [baseline-interleaved] total_eps≈3939 | morr=0.23 | visu=0.50 | dyna=0.53 | visu=0.07 | above25=2 | score=5.33 | 13.3 ep/s
+  [baseline-interleaved] total_eps≈4922 | morr=0.27 | visu=0.50 | dyna=0.27 | visu=0.13 | above25=3 | score=7.17 | 13.4 ep/s
+  [baseline-interleaved] total_eps≈5905 | morr=0.17 | visu=0.53 | dyna=0.60 | visu=0.10 | above25=2 | score=5.40 | 13.4 ep/s
+  [baseline-interleaved] total_eps≈6888 | morr=0.27 | visu=0.40 | dyna=0.53 | visu=0.07 | above25=3 | score=7.27 | 13.4 ep/s
+  [baseline-interleaved] total_eps≈7871 | morr=0.20 | visu=0.47 | dyna=0.60 | visu=0.13 | above25=2 | score=5.40 | 13.4 ep/s
+  [baseline-interleaved] total_eps≈8854 | morr=0.13 | visu=0.43 | dyna=0.67 | visu=0.00 | above25=2 | score=5.23 | 13.4 ep/s
+  [baseline-interleaved] total_eps≈9837 | morr=0.23 | visu=0.37 | dyna=0.63 | visu=0.03 | above25=2 | score=5.27 | 13.4 ep/s
+  [baseline-interleaved] total_eps≈10820 | morr=0.13 | visu=0.47 | dyna=0.50 | visu=0.20 | above25=2 | score=5.30 | 13.5 ep/s
+  [baseline-interleaved] total_eps≈11803 | morr=0.27 | visu=0.70 | dyna=0.77 | visu=0.07 | above25=3 | score=7.80 | 13.5 ep/s
+  [baseline-interleaved] total_eps≈12786 | morr=0.20 | visu=0.53 | dyna=0.63 | visu=0.17 | above25=2 | score=5.53 | 13.5 ep/s
+  [baseline-interleaved] total_eps≈13769 | morr=0.13 | visu=0.37 | dyna=0.87 | visu=0.03 | above25=2 | score=5.40 | 13.5 ep/s
+  [baseline-interleaved] total_eps≈14752 | morr=0.20 | visu=0.67 | dyna=0.77 | visu=0.00 | above25=2 | score=5.63 | 13.5 ep/s
+  [baseline-interleaved] total_eps≈15735 | morr=0.23 | visu=0.57 | dyna=0.77 | visu=0.07 | above25=2 | score=5.63 | 13.5 ep/s
+  [baseline-interleaved] total_eps≈16719 | morr=0.30 | visu=0.37 | dyna=0.63 | visu=0.13 | above25=3 | score=7.43 | 13.5 ep/s
+  [baseline-interleaved] total_eps≈17702 | morr=0.10 | visu=0.67 | dyna=0.87 | visu=0.13 | above25=2 | score=5.77 | 13.5 ep/s
+  [baseline-interleaved] total_eps≈18685 | morr=0.23 | visu=0.63 | dyna=0.80 | visu=0.07 | above25=2 | score=5.73 | 13.5 ep/s
+  [baseline-interleaved] total_eps≈19668 | morr=0.20 | visu=0.53 | dyna=0.47 | visu=0.10 | above25=2 | score=5.30 | 13.5 ep/s
+  [restoring best baseline model: score=7.80]
+  ✓ baseline on morris_water_maze: success_rate=0.220
+  ✓ baseline on visual_foraging: success_rate=0.540
+  ✓ baseline on dynamic_obstacles: success_rate=0.720
+  ✓ baseline on visual_search: success_rate=0.090
+
+======================================================================
+PHASE 2: GENERATING PLOTS
+======================================================================
+  Saved plot: results/comparison_morris_water_maze.png
+  Saved plot: results/comparison_visual_foraging.png
+  Saved plot: results/comparison_dynamic_obstacles.png
+  Saved plot: results/comparison_visual_search.png
+  Saved plot: results/final_comparison.png
+
+======================================================================
+PHASE 3: EVALUATION
+======================================================================
+
+======================================================================
+RUNNING FULL GENERALIZABILITY EVALUATION
+======================================================================
+
+[1/5] Multi-task performance...
+[2/5] Zero-shot transfer...
+[3/5] Few-shot adaptation...
+[4/5] Catastrophic forgetting...
+[5/5] Strategy diversity analysis...
+
+======================================================================
+EVALUATION SUMMARY
+======================================================================
+
+Multi-task average success rate:
+  Augmented (PFC):  0.432
+  Baseline (Fixed): 0.383
+  Delta:            +0.050
+
+Zero-shot transfer (avg across tasks):
+  Augmented: 0.413
+  Baseline:  0.366
+
+Few-shot adaptation on 'morris_water_maze':
+  Augmented: 30 episodes
+  Baseline:  118 episodes
+
+Strategy diversity (augmented model):
+  morris_water_maze: entropy=0.622, dist={'EXPLORE': np.float64(0.7485018077361201), 'APPROACH': np.float64(0.23599623594670893), 'AVOID': np.float64(0.0), 'EXPLOIT': np.float64(0.015501956317171018), 'MEMORIZE': np.float64(0.0)}
+  visual_foraging: entropy=0.738, dist={'EXPLORE': np.float64(0.7387101046219043), 'APPROACH': np.float64(0.17832075221824925), 'AVOID': np.float64(0.0), 'EXPLOIT': np.float64(0.08296914315984638), 'MEMORIZE': np.float64(0.0)}
+  dynamic_obstacles: entropy=0.296, dist={'EXPLORE': np.float64(0.9219501648559537), 'APPROACH': np.float64(0.07177990378898438), 'AVOID': np.float64(0.0), 'EXPLOIT': np.float64(0.006269931355061888), 'MEMORIZE': np.float64(0.0)}
+  visual_search: entropy=0.178, dist={'EXPLORE': np.float64(0.956857187844434), 'APPROACH': np.float64(0.043142812155566056), 'AVOID': np.float64(0.0), 'EXPLOIT': np.float64(0.0), 'MEMORIZE': np.float64(0.0)}
+======================================================================
+  Saved plot: results/strategy_distribution.png
+
+  Saved evaluation report: results/evaluation_report.json
+
+✓ Experiment complete. Results saved to: results

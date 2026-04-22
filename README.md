@@ -246,10 +246,19 @@ python run_experiment.py --mode full --seed 123 --results-dir results_seed123
 ### View results
 
 Results are saved to `results/` (or `--results-dir`):
-- `comparison_<task>.png` -- Training curves per task
-- `final_comparison.png` -- Bar chart of final success rates
-- `strategy_distribution.png` -- Meta-controller sub-objective usage per task
+- `final_comparison.png` -- 3-seed average success rate per task with std error bars
+- `strategy_distribution.png` -- 3-seed average meta-controller sub-objective usage per task
+- `zero_shot_transfer.png` -- 3-seed zero-shot success on unseen task variants
+- `per_seed_breakdown.png` -- Per-seed averages and per-seed deltas
+- `comparison_<task>.png` -- Per-seed success rate for each task
+- `per_task_seed_grid.png` -- Combined per-task × per-seed grid
 - `evaluation_report.json` -- Full evaluation metrics
+
+To regenerate the aggregate plots from the per-seed `evaluation_report.json` files:
+
+```bash
+python regenerate_plots.py
+```
 
 ---
 

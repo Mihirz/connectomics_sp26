@@ -1,0 +1,15 @@
+# Agent working notes (not for publication)
+AGENT_TASKS.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# OS
+.DS_Store
+
+# Scratch
+/private/tmp/

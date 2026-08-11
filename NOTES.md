@@ -1,124 +1,157 @@
-# Self-Optimizing Training Paradigm — Project Notes
+# Design Decisions and the Evidence Behind Them
 
-## For Claude Code: Read this first before making any changes.
+Every non-obvious choice in this codebase, why it is set the way it is, and what
+happens if it is changed. This is the standing reference; the dated record of how
+the project arrived here — including the results that turned out to be artifacts
+— is in [`LAB_NOTEBOOK.md`](LAB_NOTEBOOK.md).
 
-This document summarizes the design decisions, iteration history, and current
-state of the experiment. It was produced after ~10 rounds of iteration between
-Mihir and Claude on claude.ai.
+Values quoted are the current values in `config.py`. Changing any of them
+invalidates the committed results in `results_main/` and
+`results_ablation_*/`, which is why the entries below say what each one is
+holding in place.
 
 ---
 
-## Hypothesis
+## Reward structure — "Design B"
 
-A model that **chooses its own optimization function** during training — via a
-meta-controller inspired by the prefrontal cortex — will be more generalizable
-across tasks than a model trained with a single fixed objective.
+```
+policy reward = dense_task_reward + 0.08 * intrinsic(selected_sub_objective)
+meta reward   = sparse_failure_penalty + 0.2 * intrinsic(selected_sub_objective)
+```
 
-## Architecture
+**Both models receive the same dense task reward.** The augmented model gets the
+intrinsic term on top; the baseline does not. The meta-controller never sees the
+dense reward — it has to infer which sub-objectives are productive from failure
+avoidance plus per-step intrinsic feedback.
 
-**Augmented model (PFC):** CNN encoder → latent state → meta-controller selects
-one of 5 sub-objectives (EXPLORE, APPROACH, AVOID, EXPLOIT, MEMORIZE) → action
-policy conditioned on [latent + sub-objective embedding] → action.
+The earlier alternative ("Design A") gave the action policy intrinsic reward
+*only*. That is not a fair comparison: it hands the augmented model a strictly
+harder problem than the baseline, and it does not match the biology either. The
+PFC modulates striatal reward learning rather than substituting for it.
 
-**Baseline model:** Same CNN encoder → latent state → action policy → action.
-Same parameter count (~185k each, differing by only 22 params).
+**`intrinsic_reward_scale = 0.08`** is load-bearing. Raw intrinsic rewards run
+~0.1/step against dense rewards at ~0.01/step. Unscaled, the task gradient is
+drowned out and the policy learns to farm intrinsic reward instead of solving the
+task.
 
-## Key Design Decisions (arrived at through iteration)
+**`meta_intrinsic_feedback = 0.2`** exists because credit assignment from a
+single end-of-episode failure signal over ~300 timesteps is close to hopeless.
+It is the per-step "is this drive producing anything" signal.
 
-### 1. Design B: Dense + Scaled Intrinsic Rewards
-**Both models receive the same dense task reward.** The augmented model
-additionally gets intrinsic reward from the selected sub-objective, scaled down.
+## Temporal commitment — `meta_decision_interval = 16`
 
-- Action policy reward = `dense_reward + 0.1 × intrinsic_reward`
-- Meta-controller reward = `sparse_failure_penalty + 0.2 × intrinsic_reward`
-- The meta-controller does NOT get dense reward
+The meta-controller chooses once every 16 steps and the choice is held in
+between, giving ~18 decisions per episode instead of ~300. Three reasons, in
+descending order of how much they actually mattered:
 
-**Why:** The original design (intrinsic-only for the action policy) made the
-augmented model solve a much harder optimization problem. The PFC doesn't
-replace the reward system, it supplements it. Dense reward is the "VTA →
-striatum" pathway; intrinsic reward is the "PFC top-down modulation."
+1. **Credit assignment.** 300 sparse-feedback decisions per episode is not a
+   learnable problem at this scale.
+2. **Policy stability.** The action policy is conditioned on the sub-objective
+   embedding. Switching every step creates a feedback loop: the meta-controller
+   shifts, the policy destabilizes, and the meta-controller then evaluates a
+   strategy against a policy that has not settled into it.
+3. **Biological fidelity.** PFC executive control operates on seconds, not
+   milliseconds.
 
-**Critical:** `intrinsic_reward_scale = 0.1` in config.py. Without this,
-intrinsic rewards (~0.1/step) drown out dense rewards (~0.01/step) and the
-policy can't learn the task.
+Evaluation applies the same 16-step commitment as training. It did not until
+2026-08-11 — evaluation used to re-decide every step — and that inconsistency
+had to be fixed before the selection-mechanism ablation could mean anything.
 
-### 2. Temporal Commitment (meta_decision_interval = 15)
-The meta-controller commits to a sub-objective for 15 steps before
-reconsidering. Without this:
-- Per-step strategy switching creates a feedback loop (meta shifts → policy
-  destabilizes → meta re-evaluates incorrectly → repeat)
-- Credit assignment over 300 timesteps with sparse reward is impossible
-- Biologically: PFC executive control operates on seconds, not milliseconds
+## Sub-objective library — three, not five
 
-### 3. Grid Size 20 (not 32)
-The original 32×32 grid made exploration intractable. A 20×20 pool has ~254
-cells vs ~616, and 300-step episodes can cover meaningful space.
+EXPLORE, APPROACH, EXPLOIT. AVOID and MEMORIZE were removed after they were
+selected under 5% and 0–18% of the time respectively.
 
-### 4. Morris Water Maze Enhancements
-- **4 landmark cues** at pool edges (N=red, S=blue, E=yellow, W=cyan) —
-  matches the real experimental protocol
-- **Proximity gradient** (70% pool radius, 30% color shift) — warm tint near
-  the hidden platform gives the CNN a learnable signal
-- **Distance-scaled failure penalty** — closer approach → milder timeout penalty
+**This reduction was decided on selection rates measured on the four evaluation
+tasks, with no held-out task.** It is a form of tuning on the test set and the
+README says so. All results currently reported were produced after the
+reduction.
 
-### 5. NaN Gradient Protection
-When the model reaches high success (very short episodes), reward spikes cause
-gradient explosions. Three layers of defense:
-- Advantage clamping to [-5, 5]
-- Ratio clamping to [0.01, 100]
-- **Gradient norm check after backward() but before optimizer.step()** — if
-  `clip_grad_norm_` returns NaN/Inf, zero gradients and skip the step
-- try/except around entire PPO batch processing
+APPROACH and EXPLOIT are deliberately different signals: APPROACH rewards
+*decreasing* distance to a salient target, EXPLOIT rewards *being* near one. The
+distinction is what lets "travel to the food" and "stay and harvest" be separate
+strategies.
 
-**Current status: The NaN protection may still be insufficient.** The last run
-crashed with NaN during rollout collection (meaning weights were corrupted
-despite protections). The grad_norm check was the most recent fix and hasn't
-been tested yet.
+## Conditioning — concatenation at `objective_embed_dim = 32`
 
-## Current State & What Needs to Happen
+The policy sees `[latent_256; embed_32]` = 288 dims. FiLM conditioning was tried
+and reverted: it fragmented the latent space. 32 dims puts the embedding at ~11%
+of the conditioned vector, enough for the policy to differentiate modes without
+the latent state losing its share of the input.
 
-### What works:
-- Single-task training on Morris water maze: augmented model reaches 96%
-  success, slightly outperforming baseline (88%)
-- Meta-controller learns meaningful strategy specialization (obj_ent ~0.7-0.9)
-- Parameter parity is excellent (22 param difference)
+## GRU meta-controller
 
-### What's broken:
-- **Full experiment crashes with NaN** during sequential multi-task training.
-  The model learns morris_water_maze well, then NaN appears when episodes become
-  very short (avg_len=8). The grad_norm NaN check was just added and needs testing.
-- Three of four tasks (visual_foraging, dynamic_obstacles, visual_search) have
-  never been verified to work individually. They may have their own issues.
+`GRUCell`, not `nn.GRU`, because rollouts step one observation at a time. The
+non-obvious part is PPO re-evaluation: mini-batch shuffling destroys temporal
+order, so `RolloutBuffer` stores the hidden state *as it was before* each step's
+forward pass and `evaluate_actions()` takes those stored states as an argument.
+Re-running the GRU from a zero state during the update would compute log-probs
+for decisions the model never made.
 
-### Recommended next steps:
-1. Run `python run_experiment.py --mode full --episodes 3000 --device cuda`
-   and see if the NaN fix holds
-2. If NaN persists, consider: reducing learning rate when success is high,
-   or adding a learning rate scheduler that decays as performance improves
-3. If full experiment completes, examine the evaluation report in
-   `results/evaluation_report.json` — the key metrics are multi-task average
-   success, zero-shot transfer, and strategy diversity across tasks
-4. Test each task individually if needed:
-   `python run_experiment.py --mode single_task --task <name> --episodes 2000`
-5. The visual_foraging task requires collecting 6/8 food while avoiding 3
-   predators — may need tuning (predator speed, food count, etc.)
-6. The dynamic_obstacles task had 0% success for the baseline at 3000 episodes
-   — the obstacle density or speed may be too high
+Hidden state resets on episode boundaries, in training and evaluation both.
 
-## File Structure
+The GRU's demonstrated effect is on the mechanism, not on the score: it holds
+selection entropy at ~0.6–1.1 where the feedforward version collapsed. Whether
+it improves task performance is exactly what the `--meta-mode random` ablation
+exists to test.
 
-- `config.py` — All hyperparameters (env, model, training, sub-objectives)
-- `environments.py` — 4 grid-world environments (Morris maze, foraging,
-  obstacles, visual search)
-- `models.py` — AugmentedModel and BaselineModel (shared CNN encoder)
-- `sub_objectives.py` — Intrinsic reward library (EXPLORE/APPROACH/AVOID/
-  EXPLOIT/MEMORIZE)
-- `training.py` — PPO training loops for both paradigms (two-level for
-  augmented, standard for baseline)
-- `evaluate.py` — 5 generalizability metrics
-- `run_experiment.py` — Main entry point (smoke_test / single_task / full)
+## Parameter parity
 
-## Hardware
-- NVIDIA GeForce RTX 4070 SUPER (12 GB VRAM)
-- Both models combined use < 5 MB VRAM
-- Single-task runs take ~2-4 minutes, full experiment ~30-40 minutes
+231,050 (augmented) vs 231,590 (baseline), a 540-parameter gap, 0.998x. The
+baseline's policy and value heads are widened (`hidden_dim + 168`) to absorb the
+capacity the augmented model spends on the meta-controller, the embeddings and
+the meta-value head. Without this the comparison measures capacity, not paradigm.
+
+Note that in every `--meta-mode` other than `learned` the GRU meta-controller and
+meta-value head are instantiated but never run, so those arms train and act with
+152,518 parameters. `count_active_parameters()` in `models.py` reports this, and
+the README quotes it rather than the constructor's total.
+
+## Numerical stability
+
+High success produces very short episodes, which produce reward spikes, which
+produced NaN weights and a crashed run in April. Four defenses, all still in
+`training.py`:
+
+- advantage clamping to [-5, 5]
+- PPO ratio clamping to [0.01, 100]
+- a gradient-norm check between `backward()` and `optimizer.step()` — if
+  `clip_grad_norm_` returns NaN/Inf, zero the gradients and skip the step
+- `try/except (ValueError, RuntimeError)` around each PPO mini-batch, since NaN
+  weights surface as a `Categorical` constructor error
+
+The crash has not recurred since the gradient-norm check was added.
+
+## Entropy floor on the meta-controller
+
+`meta_entropy_coef = 0.15`, `meta_entropy_floor = 0.4`. Below the floor the
+entropy bonus ramps smoothly from 1x to 5x rather than switching on at a
+threshold; a hard cliff destabilized training. Without any floor the
+meta-controller collapses onto a single sub-objective within a few thousand
+episodes, which makes the whole architecture pointless.
+
+## Environment sizing
+
+**`grid_size = 20`, not 32.** A 32×32 pool has ~616 reachable cells and 300-step
+episodes cannot cover enough of it to find a hidden platform by chance, so there
+is no signal to bootstrap from. 20×20 gives ~254.
+
+**Morris Water Maze** carries four coloured landmark cues at the pool edges
+(allocentric reference, as in the real protocol), a proximity gradient rendered
+as a warm tint so the CNN has a learnable cue, and a distance-scaled timeout
+penalty so a near miss is punished less than a wander.
+
+## Known limitations
+
+- **Visual Search is not solved by either model** (0.14 vs 0.08). The delta is
+  noise between two failures and should not be counted as support for the
+  hypothesis.
+- **Evaluation environments are unseeded.** `make_env(..., variant_seed=None)`
+  produces a fresh `RandomState`, so repeated evaluation of identical weights
+  gives slightly different numbers. Across-seed CIs absorb this, but a single
+  run is not bit-reproducible.
+- **Few-shot adaptation does not fine-tune.** It measures how quickly rolling
+  success reaches threshold with fixed weights. It is reported as such.
+- **Four tasks, one family.** All four are 20×20 grid-worlds with the same
+  action space and observation format. Nothing here speaks to transfer beyond
+  that family.

@@ -27,6 +27,39 @@ from config import ModelConfig, EnvConfig
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# SELECTION-MECHANISM ABLATION ARMS
+# ═══════════════════════════════════════════════════════════════════════════════
+# The hypothesis is about *learning which* sub-objective to pursue, not about
+# intrinsic reward shaping in general.  Those two explanations are only
+# separable if the intrinsic rewards are held fixed while the selection
+# mechanism is varied.  These are the arms that do that.
+#
+#   learned         GRU meta-controller selects (default; the headline model)
+#   random          uniform random sub-objective at each 16-step boundary
+#   fixed-explore   EXPLORE held for the whole episode
+#   fixed-approach  APPROACH held for the whole episode
+#   fixed-exploit   EXPLOIT held for the whole episode
+#   uniform-sum     no selection; intrinsic reward is the sum of all three
+#
+# Every arm keeps the same encoder, the same 0.08 intrinsic scale, the same
+# 16-step commitment boundaries, and the same sub-objective embedding input to
+# the policy, so the conditioned input dimensionality never changes.
+
+META_MODES = [
+    "learned",
+    "random",
+    "fixed-explore",
+    "fixed-approach",
+    "fixed-exploit",
+    "uniform-sum",
+]
+
+# Sentinel objective index meaning "all sub-objectives active at once"
+# (used by `uniform-sum`, which makes no selection).
+ALL_OBJECTIVES = -1
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # SHARED CNN ENCODER
 # ═══════════════════════════════════════════════════════════════════════════════
 # Processes raw pixel observations into a compact latent representation.
@@ -164,8 +197,17 @@ class AugmentedModel(nn.Module):
     for the policy to differentiate modes without fragmenting the latent space.
     """
 
-    def __init__(self, model_cfg: ModelConfig, env_cfg: EnvConfig):
+    def __init__(self, model_cfg: ModelConfig, env_cfg: EnvConfig, meta_mode: str = "learned"):
         super().__init__()
+
+        # ── Selection mechanism (ablation arm) ──
+        # "learned" is the default and the configuration used for the headline
+        # results: the GRU meta-controller chooses the sub-objective.  The other
+        # modes replace that choice with an exogenous rule while leaving the
+        # encoder, the sub-objective embeddings, the intrinsic reward functions
+        # and the 16-step commitment boundaries untouched.  See META_MODES.
+        assert meta_mode in META_MODES, f"unknown meta_mode {meta_mode!r}"
+        self.meta_mode = meta_mode
 
         self.encoder = CNNEncoder(model_cfg, env_cfg.obs_channels, env_cfg.grid_size)
 
@@ -207,8 +249,20 @@ class AugmentedModel(nn.Module):
         )
 
     def _condition(self, latent: torch.Tensor, obj_idx: torch.Tensor) -> torch.Tensor:
-        """Concatenate latent state with sub-objective embedding."""
-        obj_embed = self.obj_embeddings(obj_idx)
+        """
+        Concatenate latent state with sub-objective embedding.
+
+        Index ALL_OBJECTIVES (-1) is a sentinel used by the `uniform-sum`
+        ablation, where no single sub-objective is selected: the policy is
+        conditioned on the mean of all sub-objective embeddings so that the
+        input dimensionality is identical to every other arm.
+        """
+        is_all = obj_idx < 0
+        safe_idx = obj_idx.clamp(min=0)
+        obj_embed = self.obj_embeddings(safe_idx)
+        if is_all.any():
+            mean_embed = self.obj_embeddings.weight.mean(dim=0)
+            obj_embed = torch.where(is_all.unsqueeze(-1), mean_embed.expand_as(obj_embed), obj_embed)
         return torch.cat([latent, obj_embed], dim=-1)
 
     def init_meta_hidden(self, batch_size: int) -> torch.Tensor:
@@ -245,15 +299,25 @@ class AugmentedModel(nn.Module):
         # Step 1: Encode observation
         latent = self.encoder(obs)
 
-        # Step 2: Meta-controller with GRU integrates temporal context
-        obj_dist, new_hidden = self.meta_controller(latent, meta_hidden)
-        if forced_obj_idx is not None:
-            obj_idx = forced_obj_idx
-        elif deterministic:
-            obj_idx = obj_dist.probs.argmax(dim=-1)
+        # Step 2: Meta-controller with GRU integrates temporal context.
+        # In every ablation arm other than `learned` the sub-objective comes
+        # from outside the model, so the GRU is not run at all: it receives no
+        # gradient and contributes nothing to behavior.
+        if self.meta_mode == "learned":
+            obj_dist, new_hidden = self.meta_controller(latent, meta_hidden)
+            if forced_obj_idx is not None:
+                obj_idx = forced_obj_idx
+            elif deterministic:
+                obj_idx = obj_dist.probs.argmax(dim=-1)
+            else:
+                obj_idx = obj_dist.sample()
+            obj_logprob = obj_dist.log_prob(obj_idx)
         else:
-            obj_idx = obj_dist.sample()
-        obj_logprob = obj_dist.log_prob(obj_idx)
+            assert forced_obj_idx is not None, \
+                f"meta_mode={self.meta_mode!r} requires the caller to supply forced_obj_idx"
+            obj_idx = forced_obj_idx
+            new_hidden = meta_hidden
+            obj_logprob = torch.zeros_like(latent[:, 0])
 
         # Step 3 & 4: Concatenate latent with sub-objective embedding
         conditioned = self._condition(latent, obj_idx)
@@ -269,7 +333,10 @@ class AugmentedModel(nn.Module):
 
         # Step 6 & 7: Value estimates
         value = self.value_head(conditioned).squeeze(-1)
-        meta_value = self.meta_value_head(latent).squeeze(-1)
+        if self.meta_mode == "learned":
+            meta_value = self.meta_value_head(latent).squeeze(-1)
+        else:
+            meta_value = torch.zeros_like(value)
 
         return action, action_logprob, obj_idx, obj_logprob, value, meta_value, new_hidden
 
@@ -291,12 +358,19 @@ class AugmentedModel(nn.Module):
         """
         latent = self.encoder(obs)
 
-        # Meta-controller (use stored hidden states from rollout)
-        if meta_hidden is None:
-            meta_hidden = self.init_meta_hidden(latent.size(0))
-        obj_dist, _ = self.meta_controller(latent, meta_hidden)
-        obj_logprob = obj_dist.log_prob(obj_indices)
-        obj_entropy = obj_dist.entropy()
+        # Meta-controller (use stored hidden states from rollout).
+        # Skipped entirely outside `learned` mode — there is no meta-controller
+        # decision to re-evaluate, so it takes no gradient from the PPO update.
+        if self.meta_mode == "learned":
+            if meta_hidden is None:
+                meta_hidden = self.init_meta_hidden(latent.size(0))
+            obj_dist, _ = self.meta_controller(latent, meta_hidden)
+            obj_logprob = obj_dist.log_prob(obj_indices)
+            obj_entropy = obj_dist.entropy()
+            meta_value = self.meta_value_head(latent).squeeze(-1)
+        else:
+            zeros = torch.zeros_like(latent[:, 0])
+            obj_logprob, obj_entropy, meta_value = zeros, zeros, zeros
 
         # Concatenation-conditioned policy
         conditioned = self._condition(latent, obj_indices)
@@ -307,7 +381,6 @@ class AugmentedModel(nn.Module):
 
         # Values
         value = self.value_head(conditioned).squeeze(-1)
-        meta_value = self.meta_value_head(latent).squeeze(-1)
 
         return action_logprob, obj_logprob, value, meta_value, action_entropy, obj_entropy
 
@@ -404,6 +477,22 @@ class BaselineModel(nn.Module):
 
 def count_parameters(model: nn.Module) -> int:
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+def count_active_parameters(model: nn.Module) -> int:
+    """
+    Parameters that actually take gradient and influence behavior.
+
+    For an AugmentedModel outside `learned` mode the GRU meta-controller and
+    the meta-value head are instantiated but never run, so the honest parameter
+    count for that arm excludes them.  Reporting only the constructor's total
+    would overstate the capacity of the ablation arms.
+    """
+    total = count_parameters(model)
+    if isinstance(model, AugmentedModel) and model.meta_mode != "learned":
+        total -= count_parameters(model.meta_controller)
+        total -= count_parameters(model.meta_value_head)
+    return total
 
 
 def print_model_comparison(model_cfg: ModelConfig, env_cfg: EnvConfig):

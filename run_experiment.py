@@ -27,7 +27,10 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 
 from config import ExperimentConfig
-from models import AugmentedModel, BaselineModel, print_model_comparison
+from models import (
+    AugmentedModel, BaselineModel, print_model_comparison,
+    META_MODES, count_parameters, count_active_parameters,
+)
 from training import AugmentedTrainer, BaselineTrainer
 from evaluate import (
     evaluate_model, run_full_evaluation, eval_strategy_diversity
@@ -41,6 +44,23 @@ def set_seed(seed: int):
     np.random.seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+def convert_for_json(obj):
+    """Make numpy scalars/arrays JSON-serializable."""
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, dict):
+        return {k: convert_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_for_json(i) for i in obj]
+    return obj
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -337,9 +357,9 @@ def plot_final_summary(
 # EXPERIMENT MODES
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def run_smoke_test(cfg: ExperimentConfig):
+def run_smoke_test(cfg: ExperimentConfig, meta_mode: str = "learned"):
     """Quick sanity check that everything runs."""
-    print("\n🔬 SMOKE TEST — Verifying experiment pipeline\n")
+    print(f"\n🔬 SMOKE TEST — Verifying experiment pipeline (meta_mode={meta_mode})\n")
     cfg.train.total_episodes = 100
     cfg.train.eval_interval = 50
     cfg.train.num_eval_episodes = 10
@@ -349,7 +369,7 @@ def run_smoke_test(cfg: ExperimentConfig):
     print_model_comparison(cfg.model, cfg.env)
 
     task = cfg.tasks[0]
-    aug_trainer = AugmentedTrainer(cfg, task)
+    aug_trainer = AugmentedTrainer(cfg, task, meta_mode=meta_mode)
     base_trainer = BaselineTrainer(cfg, task)
 
     aug_results = train_on_task(aug_trainer, cfg, task, cfg.train.total_episodes, "augmented")
@@ -380,44 +400,43 @@ def run_single_task(cfg: ExperimentConfig, task_name: str):
     return {task_name: {"augmented": aug_results, "baseline": base_results}}
 
 
-def run_full_experiment(cfg: ExperimentConfig):
+def train_augmented_interleaved(cfg: ExperimentConfig, meta_mode: str = "learned"):
     """
-    Complete experiment: train both models on all tasks, then evaluate.
+    Train one augmented-architecture model interleaved across all tasks.
 
-    Training strategy:
-    - Augmented model: Trained SEQUENTIALLY on all tasks (testing if the
-      strategy library persists across tasks).
-    - Baseline models: One model per task, each trained independently
-      (this is the best-case scenario for the baseline).
+    Shared by the main experiment (`meta_mode="learned"`) and every
+    selection-mechanism ablation arm, so that the arms differ only in how the
+    sub-objective is chosen — the schedule, the optimizer groups, the episode
+    budget and the early-stopping rule are identical.
+
+    Returns:
+        (model, per-task update history, per-task eval history)
     """
-    print("\n🔬 FULL EXPERIMENT — All tasks, both models\n")
-    print_model_comparison(cfg.model, cfg.env)
-
-    # ── Train augmented model on all tasks sequentially ──
-    augmented_model = AugmentedModel(cfg.model, cfg.env).to(cfg.device)
-    performance_history = {}
-    all_results = {}
-
-    print("\n" + "=" * 70)
-    print("PHASE 1: TRAINING")
-    print("=" * 70)
+    augmented_model = AugmentedModel(cfg.model, cfg.env, meta_mode=meta_mode).to(cfg.device)
 
     # Interleaved training from scratch with shared optimizer.
     # No MWM pre-training — all tasks get equal footing so the encoder
     # develops balanced features for all tasks, not MWM-biased features.
-    print("\n  Interleaved training from scratch (shared optimizer)...")
+    print(f"\n  Interleaved training from scratch (shared optimizer, meta_mode={meta_mode})...")
     import torch.optim as optim
-    shared_optimizer = optim.Adam([
+    param_groups = [
         {"params": augmented_model.encoder.parameters(), "lr": cfg.train.lr_policy},
         {"params": augmented_model.policy_head.parameters(), "lr": cfg.train.lr_policy},
         {"params": augmented_model.value_head.parameters(), "lr": cfg.train.lr_policy},
         {"params": augmented_model.obj_embeddings.parameters(), "lr": cfg.train.lr_policy},
-        {"params": augmented_model.meta_controller.parameters(), "lr": cfg.train.lr_meta},
-        {"params": augmented_model.meta_value_head.parameters(), "lr": cfg.train.lr_meta},
-    ])
+    ]
+    if meta_mode == "learned":
+        # The ablation arms never run the meta-controller, so it is left out of
+        # the optimizer rather than being handed gradients that are always None.
+        param_groups += [
+            {"params": augmented_model.meta_controller.parameters(), "lr": cfg.train.lr_meta},
+            {"params": augmented_model.meta_value_head.parameters(), "lr": cfg.train.lr_meta},
+        ]
+    shared_optimizer = optim.Adam(param_groups)
+
     aug_trainers = {}
     for task in cfg.tasks:
-        trainer = AugmentedTrainer(cfg, task, existing_model=augmented_model)
+        trainer = AugmentedTrainer(cfg, task, existing_model=augmented_model, meta_mode=meta_mode)
         trainer.optimizer = shared_optimizer  # Replace per-trainer optimizer
         aug_trainers[task] = trainer
 
@@ -494,6 +513,35 @@ def run_full_experiment(cfg: ExperimentConfig):
     if evals_since_best > 0:
         print(f"  [restoring best model: sum={best_multitask_score:.2f}]")
         augmented_model.load_state_dict(best_model_state)
+
+    return augmented_model, task_history, task_eval_history
+
+
+def run_full_experiment(cfg: ExperimentConfig):
+    """
+    Complete experiment: train both models on all tasks, then evaluate.
+
+    Training strategy:
+    - Augmented model: Trained SEQUENTIALLY on all tasks (testing if the
+      strategy library persists across tasks).
+    - Baseline models: One model per task, each trained independently
+      (this is the best-case scenario for the baseline).
+    """
+    print("\n🔬 FULL EXPERIMENT — All tasks, both models\n")
+    print_model_comparison(cfg.model, cfg.env)
+
+    performance_history = {}
+    all_results = {}
+
+    print("\n" + "=" * 70)
+    print("PHASE 1: TRAINING")
+    print("=" * 70)
+
+    import copy
+    import torch.optim as optim
+
+    augmented_model, task_history, task_eval_history = train_augmented_interleaved(cfg, "learned")
+    eps_per_rollout = cfg.train.num_parallel_envs * cfg.train.rollout_steps / cfg.env.max_steps_per_episode
 
     # Final evaluation per task
     for task in cfg.tasks:
@@ -629,6 +677,26 @@ def run_full_experiment(cfg: ExperimentConfig):
         augmented_model, baseline_models, cfg, performance_history
     )
 
+    # Provenance and per-task training curves, so the aggregate figures and the
+    # README tables can be rebuilt from the committed reports alone.
+    report["run"] = {
+        "seed": cfg.seed,
+        "meta_mode": "learned",
+        "episodes_per_task": cfg.train.total_episodes,
+        "parameters": {
+            "augmented": count_parameters(AugmentedModel(cfg.model, cfg.env)),
+            "baseline": count_parameters(BaselineModel(cfg.model, cfg.env)),
+        },
+    }
+    report["_per_task"] = {
+        task: {
+            arm: {"eval_history": all_results[task][arm]["eval_history"],
+                  "final": all_results[task][arm]["final"]}
+            for arm in ("augmented", "baseline")
+        }
+        for task in cfg.tasks
+    }
+
     # Strategy distribution plot
     plot_strategy_distribution(report["strategy_diversity"], cfg.results_dir)
 
@@ -636,25 +704,91 @@ def run_full_experiment(cfg: ExperimentConfig):
     report_path = os.path.join(cfg.results_dir, "evaluation_report.json")
     os.makedirs(cfg.results_dir, exist_ok=True)
 
-    # Convert numpy types for JSON serialization
-    def convert_for_json(obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, np.bool_):
-            return bool(obj)
-        elif isinstance(obj, dict):
-            return {k: convert_for_json(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [convert_for_json(i) for i in obj]
-        return obj
-
     with open(report_path, "w") as f:
         json.dump(convert_for_json(report), f, indent=2, default=str)
     print(f"\n  Saved evaluation report: {report_path}")
+
+    return report
+
+
+def run_ablation(cfg: ExperimentConfig, meta_mode: str):
+    """
+    Train and evaluate a single selection-mechanism ablation arm.
+
+    Only the augmented-architecture model is trained here.  The baseline is
+    unaffected by `--meta-mode` and is already trained once per seed by
+    `--mode full`, so retraining it per arm would burn compute without adding
+    information.  Everything that touches the augmented model — encoder,
+    intrinsic reward scale, 16-step commitment, episode budget, seeds,
+    evaluation protocol — is shared with `--mode full` via
+    `train_augmented_interleaved`, so the arms are directly comparable.
+    """
+    print(f"\n🔬 ABLATION — meta_mode={meta_mode}, seed={cfg.seed}\n")
+
+    model = AugmentedModel(cfg.model, cfg.env, meta_mode=meta_mode)
+    total_params = count_parameters(model)
+    active_params = count_active_parameters(model)
+    print(f"  Instantiated parameters: {total_params:,}")
+    print(f"  Parameters that train and act: {active_params:,}")
+    if active_params != total_params:
+        print(f"  (GRU meta-controller + meta-value head unused in this arm: "
+              f"{total_params - active_params:,} params)")
+    del model
+
+    print("\n" + "=" * 70)
+    print("PHASE 1: TRAINING")
+    print("=" * 70)
+
+    augmented_model, task_history, task_eval_history = train_augmented_interleaved(cfg, meta_mode)
+
+    print("\n" + "=" * 70)
+    print("PHASE 2: EVALUATION")
+    print("=" * 70)
+
+    multitask = {}
+    for task in cfg.tasks:
+        final_eval = evaluate_model(
+            augmented_model, cfg, task,
+            num_episodes=cfg.train.num_eval_episodes,
+            is_augmented=True,
+        )
+        print(f"  ✓ {meta_mode} on {task}: success_rate={final_eval['success_rate']:.3f}")
+        multitask[task] = final_eval
+
+    transfer = {}
+    for task in cfg.tasks:
+        scores = []
+        for v in range(cfg.train.num_transfer_variants):
+            variant_seed = 10000 + v * 137  # Same variants as the main experiment
+            scores.append(evaluate_model(
+                augmented_model, cfg, task,
+                num_episodes=cfg.train.num_eval_episodes,
+                variant_seed=variant_seed,
+                is_augmented=True,
+            )["success_rate"])
+        transfer[task] = {"mean_success": float(np.mean(scores)),
+                          "std_success": float(np.std(scores))}
+
+    avg_success = float(np.mean([multitask[t]["success_rate"] for t in cfg.tasks]))
+    avg_transfer = float(np.mean([transfer[t]["mean_success"] for t in cfg.tasks]))
+    print(f"\n  {meta_mode}: multi-task avg={avg_success:.3f}, zero-shot avg={avg_transfer:.3f}")
+
+    report = {
+        "meta_mode": meta_mode,
+        "seed": cfg.seed,
+        "episodes_per_task": cfg.train.total_episodes,
+        "parameters": {"instantiated": total_params, "active": active_params},
+        "multitask": {"augmented": multitask, "augmented_avg_success": avg_success},
+        "zero_shot_transfer": {"augmented": transfer, "augmented_avg_success": avg_transfer},
+        "eval_history": task_eval_history,
+        "history": {t: dict(task_history[t]) for t in cfg.tasks},
+    }
+
+    os.makedirs(cfg.results_dir, exist_ok=True)
+    report_path = os.path.join(cfg.results_dir, "evaluation_report.json")
+    with open(report_path, "w") as f:
+        json.dump(convert_for_json(report), f, indent=2, default=str)
+    print(f"  Saved ablation report: {report_path}")
 
     return report
 
@@ -671,11 +805,18 @@ def main():
 Examples:
   python run_experiment.py --mode smoke_test
   python run_experiment.py --mode single_task --task morris_water_maze --episodes 2000
-  python run_experiment.py --mode full --episodes 5000 --device cuda
+  python run_experiment.py --mode full --episodes 5000 --seed 42 --results-dir results_main/seed42
+  python run_experiment.py --mode ablation --meta-mode random --episodes 5000 \\
+      --seed 42 --results-dir results_ablation_random/seed42
         """,
     )
-    parser.add_argument("--mode", choices=["smoke_test", "single_task", "full"],
+    parser.add_argument("--mode", choices=["smoke_test", "single_task", "full", "ablation"],
                         default="smoke_test", help="Experiment mode")
+    parser.add_argument("--meta-mode", choices=META_MODES, default="learned",
+                        help="Sub-objective selection mechanism (ablation arm). "
+                             "'learned' is the default meta-controller; 'random' is "
+                             "the decisive comparison that keeps the intrinsic rewards "
+                             "and removes only the learned selection.")
     parser.add_argument("--task", type=str, default="morris_water_maze",
                         choices=["morris_water_maze", "visual_foraging",
                                  "dynamic_obstacles", "visual_search"],
@@ -708,11 +849,13 @@ Examples:
 
     # ── Run ──
     if args.mode == "smoke_test":
-        run_smoke_test(cfg)
+        run_smoke_test(cfg, args.meta_mode)
     elif args.mode == "single_task":
         run_single_task(cfg, args.task)
     elif args.mode == "full":
         run_full_experiment(cfg)
+    elif args.mode == "ablation":
+        run_ablation(cfg, args.meta_mode)
 
     print("\n✓ Experiment complete. Results saved to:", cfg.results_dir)
 

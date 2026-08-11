@@ -35,6 +35,7 @@ from config import ExperimentConfig
 from models import AugmentedModel, BaselineModel
 from environments import make_env, ENV_REGISTRY
 from sub_objectives import IntrinsicRewardComputer, NUM_SUB_OBJECTIVES, SUB_OBJ_NAMES
+from training import select_objectives
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -69,10 +70,17 @@ def evaluate_model(
     env = make_env(task_name, cfg.env, variant_seed=variant_seed)
     reward_computer = IntrinsicRewardComputer(cfg.sub_obj)
 
+    # Selection mechanism under evaluation.  Defaults to "learned" for the
+    # baseline model, which never consults it.
+    meta_mode = getattr(model, "meta_mode", "learned")
+    decision_interval = cfg.train.meta_decision_interval
+    meta_rng = np.random.RandomState(cfg.seed + 424242)
+
     successes = []
     episode_lengths = []
     total_rewards = []
     obj_selections = np.zeros(NUM_SUB_OBJECTIVES) if is_augmented else None
+    all_objective_steps = 0  # steps under `uniform-sum`, where nothing is selected
 
     for ep in range(num_episodes):
         obs, _ = env.reset()
@@ -84,16 +92,39 @@ def evaluate_model(
         # Initialize GRU hidden state for augmented model (reset each episode)
         if is_augmented:
             meta_hidden = model.init_meta_hidden(1)
+            # Temporal commitment at evaluation time must match training:
+            # the sub-objective is chosen every `meta_decision_interval` steps
+            # and held in between, for every arm.
+            current_obj = torch.zeros(1, dtype=torch.long, device=device)
+            steps_until_decision = 0
 
         while not done:
             obs_tensor = torch.FloatTensor(obs).unsqueeze(0).to(device)
 
             with torch.no_grad():
                 if is_augmented:
+                    if steps_until_decision <= 0:
+                        if meta_mode == "learned":
+                            _, _, new_obj, _, _, _, _ = model(
+                                obs_tensor, meta_hidden, deterministic=True
+                            )
+                            current_obj = new_obj
+                        else:
+                            current_obj = torch.as_tensor(
+                                select_objectives(meta_mode, 1, meta_rng),
+                                dtype=torch.long, device=device,
+                            )
+                        steps_until_decision = decision_interval
+
                     action, _, obj_idx, _, _, _, meta_hidden = model(
-                        obs_tensor, meta_hidden, deterministic=True
+                        obs_tensor, meta_hidden, deterministic=True,
+                        forced_obj_idx=current_obj,
                     )
-                    obj_selections[obj_idx.item()] += 1
+                    steps_until_decision -= 1
+                    if obj_idx.item() >= 0:
+                        obj_selections[obj_idx.item()] += 1
+                    else:
+                        all_objective_steps += 1
                 else:
                     action, _, _ = model(obs_tensor, deterministic=True)
 
@@ -112,7 +143,12 @@ def evaluate_model(
         "std_reward": np.std(total_rewards),
     }
 
-    if is_augmented and obj_selections is not None:
+    if is_augmented and all_objective_steps > 0:
+        # `uniform-sum` makes no selection at all, so selection entropy is
+        # undefined rather than zero.  Record that explicitly.
+        results["strategy_entropy"] = None
+        results["strategy_distribution"] = {"ALL (no selection)": 1.0}
+    elif is_augmented and obj_selections is not None:
         # Strategy diversity: entropy of sub-objective selections
         total = obj_selections.sum()
         if total > 0:
@@ -275,20 +311,36 @@ def eval_few_shot_adaptation(
         env = make_env(task_name, cfg.env, variant_seed=variant_seed)
         episodes_to_threshold = max_adaptation_episodes  # Default: didn't reach it
 
+        meta_mode = getattr(ft_model, "meta_mode", "learned")
+        decision_interval = cfg.train.meta_decision_interval
+        meta_rng = np.random.RandomState(cfg.seed + 133742)
+
         recent_successes = []
         for ep in range(max_adaptation_episodes):
             obs, _ = env.reset()
             done = False
             if is_aug:
                 meta_hidden = ft_model.init_meta_hidden(1)
+                current_obj = torch.zeros(1, dtype=torch.long, device=cfg.device)
+                steps_until_decision = 0
 
             while not done:
                 obs_tensor = torch.FloatTensor(obs).unsqueeze(0).to(cfg.device)
                 with torch.no_grad():
                     if is_aug:
+                        if steps_until_decision <= 0:
+                            if meta_mode == "learned":
+                                _, _, current_obj, _, _, _, _ = ft_model(obs_tensor, meta_hidden)
+                            else:
+                                current_obj = torch.as_tensor(
+                                    select_objectives(meta_mode, 1, meta_rng),
+                                    dtype=torch.long, device=cfg.device,
+                                )
+                            steps_until_decision = decision_interval
                         action, _, _, _, _, _, meta_hidden = ft_model(
-                            obs_tensor, meta_hidden
+                            obs_tensor, meta_hidden, forced_obj_idx=current_obj
                         )
+                        steps_until_decision -= 1
                     else:
                         action, _, _ = ft_model(obs_tensor)
                 obs, ri, done, _ = env.step(action.item())
@@ -472,8 +524,9 @@ def run_full_evaluation(
     print(f"\nStrategy diversity (augmented model):")
     for task, data in diversity.items():
         if isinstance(data, dict):
-            ent = data.get("strategy_entropy", 0)
-            print(f"  {task}: entropy={ent:.3f}, dist={data.get('strategy_distribution', {})}")
+            ent = data.get("strategy_entropy")
+            ent_str = "n/a" if ent is None else f"{ent:.3f}"
+            print(f"  {task}: entropy={ent_str}, dist={data.get('strategy_distribution', {})}")
 
     print("=" * 70)
 

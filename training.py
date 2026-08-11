@@ -34,9 +34,38 @@ from typing import Dict, List, Optional, Tuple
 from collections import defaultdict
 
 from config import ExperimentConfig, ModelConfig
-from models import AugmentedModel, BaselineModel
-from sub_objectives import IntrinsicRewardComputer, NUM_SUB_OBJECTIVES
+from models import AugmentedModel, BaselineModel, ALL_OBJECTIVES
+from sub_objectives import IntrinsicRewardComputer, NUM_SUB_OBJECTIVES, EXPLORE, APPROACH, EXPLOIT
 from environments import make_vectorized_env
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SELECTION MECHANISMS (ABLATION ARMS)
+# ═══════════════════════════════════════════════════════════════════════════════
+# Maps a meta-mode to the sub-objective index it commits to when the mode does
+# not learn the choice.  `random` is handled separately (it draws a fresh index
+# at every commitment boundary); `learned` is handled by the meta-controller.
+
+FIXED_MODE_OBJECTIVE = {
+    "fixed-explore": EXPLORE,
+    "fixed-approach": APPROACH,
+    "fixed-exploit": EXPLOIT,
+    "uniform-sum": ALL_OBJECTIVES,
+}
+
+
+def select_objectives(meta_mode: str, num_envs: int, rng: np.random.RandomState) -> np.ndarray:
+    """
+    Draw sub-objective indices for a set of environments hitting a commitment
+    boundary, for every mode except `learned`.
+
+    `random` is the decisive comparison: it keeps the intrinsic rewards, the
+    16-step commitment and the policy conditioning exactly as in `learned`, and
+    removes only the learning of *which* sub-objective to pursue.
+    """
+    if meta_mode == "random":
+        return rng.randint(0, NUM_SUB_OBJECTIVES, size=num_envs)
+    return np.full(num_envs, FIXED_MODE_OBJECTIVE[meta_mode], dtype=np.int64)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -181,9 +210,15 @@ class AugmentedTrainer:
     7. Both updates flow gradients through the shared encoder.
     """
 
-    def __init__(self, cfg: ExperimentConfig, task_name: str, existing_model=None):
+    def __init__(self, cfg: ExperimentConfig, task_name: str, existing_model=None,
+                 meta_mode: str = "learned"):
         self.cfg = cfg
         self.device = cfg.device
+        self.meta_mode = meta_mode
+
+        # Dedicated stream for the `random` arm so that its draws do not shift
+        # the global RNG the other arms consume — the arms stay comparable.
+        self.meta_rng = np.random.RandomState(cfg.seed + 90210)
 
         # ── Create or reuse model ──
         # When training sequentially on multiple tasks, an existing model is
@@ -192,8 +227,9 @@ class AugmentedTrainer:
         # otherwise it optimizes dangling parameters from a throwaway model.
         if existing_model is not None:
             self.model = existing_model
+            assert self.model.meta_mode == meta_mode
         else:
-            self.model = AugmentedModel(cfg.model, cfg.env).to(self.device)
+            self.model = AugmentedModel(cfg.model, cfg.env, meta_mode=meta_mode).to(self.device)
 
         # ── Optimizer (bound to the actual model's parameters) ──
         self.optimizer = optim.Adam([
@@ -264,8 +300,24 @@ class AugmentedTrainer:
                 # (this is what PPO needs to re-evaluate the decision made at this step)
                 step_meta_hidden = meta_hidden.clone()
 
+                if self.meta_mode != "learned":
+                    # ── Exogenous selection (ablation arms) ──
+                    # The objective is drawn or held outside the model, on the
+                    # same 16-step boundaries the learned arm uses.  The GRU is
+                    # never invoked, so it neither acts nor learns.
+                    if needs_decision.any():
+                        drawn = select_objectives(
+                            self.meta_mode, int(needs_decision.sum().item()), self.meta_rng
+                        )
+                        current_obj[needs_decision] = torch.as_tensor(
+                            drawn, dtype=torch.long, device=self.device
+                        )
+                        steps_until_decision[needs_decision] = decision_interval
+                    action, action_lp, _, obj_lp, value, meta_value, meta_hidden = \
+                        self.model(obs, meta_hidden, forced_obj_idx=current_obj)
+
                 # Determine which envs need a new meta-controller decision
-                if needs_decision.any():
+                elif needs_decision.any():
                     # For envs needing a decision: sample from meta-controller
                     action, action_lp, new_obj, obj_lp, value, meta_value, new_hidden = \
                         self.model(obs, meta_hidden)
@@ -284,7 +336,7 @@ class AugmentedTrainer:
                 # For mixed case (some need decision, some don't), re-run
                 # with forced for the committed envs to get correct log probs.
                 # Simplified: always pass forced_obj for consistent log probs.
-                if needs_decision.any() and not needs_decision.all():
+                if self.meta_mode == "learned" and needs_decision.any() and not needs_decision.all():
                     # Re-evaluate with the actual committed objectives
                     action, action_lp, _, obj_lp, value, meta_value, new_hidden = \
                         self.model(obs, step_meta_hidden, forced_obj_idx=current_obj)
@@ -318,17 +370,25 @@ class AugmentedTrainer:
                 # sub-objective, scaled down to match dense reward magnitudes.
                 # Without scaling, intrinsic rewards (~0.1/step) drown out dense
                 # rewards (~0.01/step) and the policy can't learn from the task.
-                scaled_intrinsic = self.cfg.train.intrinsic_reward_scale * all_intrinsic[selected_obj]
+                # The `uniform-sum` arm makes no selection: it receives every
+                # sub-objective's intrinsic reward at once.
+                if self.meta_mode == "uniform-sum":
+                    selected_intrinsic = float(all_intrinsic.sum())
+                else:
+                    selected_intrinsic = float(all_intrinsic[selected_obj])
+
+                scaled_intrinsic = self.cfg.train.intrinsic_reward_scale * selected_intrinsic
                 intrinsic_rewards[i] = dense + scaled_intrinsic
 
                 # Meta-controller: sparse failure signal + intrinsic feedback.
                 sparse_rewards[i] = (
                     extrinsic
-                    + self.cfg.train.meta_intrinsic_feedback * all_intrinsic[selected_obj]
+                    + self.cfg.train.meta_intrinsic_feedback * selected_intrinsic
                 )
 
                 # Track sub-objective usage
-                self.obj_selection_counts[selected_obj] += 1
+                if selected_obj >= 0:
+                    self.obj_selection_counts[selected_obj] += 1
 
                 if dones[i]:
                     episode_stats["success"].append(ri.get("success", False))
@@ -358,9 +418,12 @@ class AugmentedTrainer:
             obs = torch.FloatTensor(obs_np).to(self.device)
             self.total_steps += self.cfg.train.num_parallel_envs
 
-        # Compute last values for GAE bootstrap
+        # Compute last values for GAE bootstrap (under the currently committed
+        # objective, which is what the next step would actually have executed)
         with torch.no_grad():
-            _, _, _, _, last_value, last_meta_value, _ = self.model(obs, meta_hidden)
+            _, _, _, _, last_value, last_meta_value, _ = self.model(
+                obs, meta_hidden, forced_obj_idx=current_obj
+            )
 
         self.buffer.compute_gae(
             last_value, last_meta_value,
@@ -406,6 +469,31 @@ class AugmentedTrainer:
                 value_loss = 0.5 * (values - batch["returns"]).pow(2).mean()
 
                 # ── META-CONTROLLER LOSS (sparse negative rewards) ──
+                # Only the `learned` arm has a selection policy to optimize.
+                # The ablation arms train the action policy alone, on the same
+                # intrinsic rewards, so the selection mechanism is the only
+                # thing that differs between them.
+                if self.meta_mode != "learned":
+                    loss = (
+                        policy_loss
+                        + cfg.value_loss_coef * value_loss
+                        - cfg.entropy_coef * action_ent.mean()
+                    )
+                    if torch.isnan(loss) or torch.isinf(loss):
+                        continue
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), cfg.max_grad_norm)
+                    if torch.isnan(grad_norm) or torch.isinf(grad_norm):
+                        self.optimizer.zero_grad()
+                        continue
+                    self.optimizer.step()
+                    metrics["policy_loss"] += policy_loss.item()
+                    metrics["value_loss"] += value_loss.item()
+                    metrics["action_entropy"] += action_ent.mean().item()
+                    num_updates += 1
+                    continue
+
                 meta_advantages = batch["meta_advantages"]
                 if meta_advantages.std() > 1e-8:
                     meta_advantages = (meta_advantages - meta_advantages.mean()) / (meta_advantages.std() + 1e-8)

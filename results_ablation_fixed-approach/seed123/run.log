@@ -1,0 +1,194 @@
+Device: cpu
+
+🔬 ABLATION — meta_mode=fixed-approach, seed=123
+
+  Instantiated parameters: 231,050
+  Parameters that train and act: 152,518
+  (GRU meta-controller + meta-value head unused in this arm: 78,532 params)
+
+======================================================================
+PHASE 1: TRAINING
+======================================================================
+
+  Interleaved training from scratch (shared optimizer, meta_mode=fixed-approach)...
+  . rollout 0 (morr) collect=0.39s update=1.33s elapsed=0.0m
+  . rollout 20 (morr) collect=0.37s update=1.25s elapsed=0.6m
+  . rollout 40 (morr) collect=0.37s update=1.22s elapsed=1.1m
+  . rollout 60 (morr) collect=0.37s update=1.24s elapsed=1.7m
+  . rollout 80 (morr) collect=0.38s update=1.22s elapsed=2.2m
+  . rollout 100 (morr) collect=0.40s update=1.24s elapsed=2.8m
+  . rollout 120 (morr) collect=0.37s update=1.23s elapsed=3.3m
+  . rollout 140 (morr) collect=0.42s update=1.22s elapsed=3.9m
+  [interleaved] total_eps≈990 | morr=0.03 | visu=0.37 | dyna=0.20 | visu=0.03 | above25=1 | score=2.63 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 160 (morr) collect=0.39s update=1.27s elapsed=4.6m
+  . rollout 180 (morr) collect=0.37s update=1.22s elapsed=5.1m
+  . rollout 200 (morr) collect=0.37s update=1.24s elapsed=5.7m
+  . rollout 220 (morr) collect=0.37s update=1.23s elapsed=6.2m
+  . rollout 240 (morr) collect=0.37s update=1.26s elapsed=6.8m
+  . rollout 260 (morr) collect=0.37s update=1.23s elapsed=7.3m
+  . rollout 280 (morr) collect=0.36s update=1.25s elapsed=7.9m
+  [interleaved] total_eps≈1973 | morr=0.13 | visu=0.30 | dyna=0.50 | visu=0.10 | above25=2 | score=5.03 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 300 (morr) collect=0.36s update=1.24s elapsed=8.5m
+  . rollout 320 (morr) collect=0.37s update=1.22s elapsed=9.1m
+  . rollout 340 (morr) collect=0.39s update=1.23s elapsed=9.6m
+  . rollout 360 (morr) collect=0.37s update=1.29s elapsed=10.2m
+  . rollout 380 (morr) collect=0.36s update=1.24s elapsed=10.8m
+  . rollout 400 (morr) collect=0.36s update=1.22s elapsed=11.3m
+  . rollout 420 (morr) collect=0.37s update=1.26s elapsed=11.9m
+  [interleaved] total_eps≈2956 | morr=0.03 | visu=0.53 | dyna=0.47 | visu=0.13 | above25=2 | score=5.17 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 440 (morr) collect=0.37s update=1.23s elapsed=12.5m
+  . rollout 460 (morr) collect=0.36s update=1.23s elapsed=13.1m
+  . rollout 480 (morr) collect=0.36s update=1.24s elapsed=13.6m
+  . rollout 500 (morr) collect=0.37s update=1.22s elapsed=14.2m
+  . rollout 520 (morr) collect=0.39s update=1.26s elapsed=14.7m
+  . rollout 540 (morr) collect=0.36s update=1.24s elapsed=15.3m
+  . rollout 560 (morr) collect=0.37s update=1.26s elapsed=15.8m
+  [interleaved] total_eps≈3939 | morr=0.13 | visu=0.60 | dyna=0.63 | visu=0.10 | above25=2 | score=5.47 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 580 (morr) collect=0.38s update=1.25s elapsed=16.5m
+  . rollout 600 (morr) collect=0.39s update=1.27s elapsed=17.1m
+  . rollout 620 (morr) collect=0.37s update=1.23s elapsed=17.6m
+  . rollout 640 (morr) collect=0.36s update=1.24s elapsed=18.1m
+  . rollout 660 (morr) collect=0.36s update=1.24s elapsed=18.7m
+  . rollout 680 (morr) collect=0.38s update=1.23s elapsed=19.2m
+  . rollout 700 (morr) collect=0.39s update=1.29s elapsed=19.8m
+  . rollout 720 (morr) collect=0.37s update=1.22s elapsed=20.4m
+  [interleaved] total_eps≈4922 | morr=0.23 | visu=0.60 | dyna=0.70 | visu=0.17 | above25=2 | score=5.70 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 740 (morr) collect=0.38s update=1.22s elapsed=21.0m
+  . rollout 760 (morr) collect=0.38s update=1.22s elapsed=21.6m
+  . rollout 780 (morr) collect=0.37s update=1.22s elapsed=22.1m
+  . rollout 800 (morr) collect=0.36s update=1.23s elapsed=22.6m
+  . rollout 820 (morr) collect=0.36s update=1.22s elapsed=23.2m
+  . rollout 840 (morr) collect=0.37s update=1.22s elapsed=23.7m
+  . rollout 860 (morr) collect=0.38s update=1.24s elapsed=24.3m
+  [interleaved] total_eps≈5905 | morr=0.30 | visu=0.57 | dyna=0.37 | visu=0.13 | above25=3 | score=7.37 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 880 (morr) collect=0.38s update=1.30s elapsed=24.9m
+  . rollout 900 (morr) collect=0.37s update=1.27s elapsed=25.5m
+  . rollout 920 (morr) collect=0.39s update=1.29s elapsed=26.1m
+  . rollout 940 (morr) collect=0.38s update=1.27s elapsed=26.6m
+  . rollout 960 (morr) collect=0.38s update=1.23s elapsed=27.2m
+  . rollout 980 (morr) collect=0.40s update=1.27s elapsed=27.7m
+  . rollout 1000 (morr) collect=0.38s update=1.26s elapsed=28.3m
+  [interleaved] total_eps≈6888 | morr=0.57 | visu=0.53 | dyna=0.63 | visu=0.10 | above25=3 | score=7.83 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 1020 (morr) collect=0.38s update=1.29s elapsed=28.9m
+  . rollout 1040 (morr) collect=0.39s update=1.24s elapsed=29.5m
+  . rollout 1060 (morr) collect=0.43s update=1.35s elapsed=30.1m
+  . rollout 1080 (morr) collect=0.39s update=1.34s elapsed=30.7m
+  . rollout 1100 (morr) collect=0.38s update=1.30s elapsed=31.3m
+  . rollout 1120 (morr) collect=0.39s update=1.28s elapsed=31.8m
+  . rollout 1140 (morr) collect=0.37s update=1.30s elapsed=32.4m
+  [interleaved] total_eps≈7871 | morr=0.37 | visu=0.67 | dyna=0.77 | visu=0.10 | above25=3 | score=7.90 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 1160 (morr) collect=0.39s update=1.27s elapsed=33.0m
+  . rollout 1180 (morr) collect=0.38s update=1.28s elapsed=33.6m
+  . rollout 1200 (morr) collect=0.38s update=1.28s elapsed=34.2m
+  . rollout 1220 (morr) collect=0.37s update=1.24s elapsed=34.7m
+  . rollout 1240 (morr) collect=0.40s update=1.27s elapsed=35.3m
+  . rollout 1260 (morr) collect=0.40s update=1.39s elapsed=35.9m
+  . rollout 1280 (morr) collect=0.40s update=1.26s elapsed=36.4m
+  [interleaved] total_eps≈8854 | morr=0.30 | visu=0.60 | dyna=0.87 | visu=0.20 | above25=3 | score=7.97 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 1300 (morr) collect=0.38s update=1.35s elapsed=37.1m
+  . rollout 1320 (morr) collect=0.39s update=1.23s elapsed=37.6m
+  . rollout 1340 (morr) collect=0.40s update=1.36s elapsed=38.2m
+  . rollout 1360 (morr) collect=0.39s update=1.23s elapsed=38.8m
+  . rollout 1380 (morr) collect=0.41s update=1.24s elapsed=39.3m
+  . rollout 1400 (morr) collect=0.39s update=1.26s elapsed=39.9m
+  . rollout 1420 (morr) collect=0.41s update=1.26s elapsed=40.4m
+  . rollout 1440 (morr) collect=0.41s update=1.24s elapsed=41.0m
+  [interleaved] total_eps≈9837 | morr=0.77 | visu=0.50 | dyna=0.53 | visu=0.17 | above25=3 | score=7.97 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 1460 (morr) collect=0.40s update=1.27s elapsed=41.6m
+  . rollout 1480 (morr) collect=0.39s update=1.24s elapsed=42.2m
+  . rollout 1500 (morr) collect=0.41s update=1.22s elapsed=42.7m
+  . rollout 1520 (morr) collect=0.38s update=1.24s elapsed=43.3m
+  . rollout 1540 (morr) collect=0.40s update=1.28s elapsed=43.8m
+  . rollout 1560 (morr) collect=0.40s update=1.23s elapsed=44.4m
+  . rollout 1580 (morr) collect=0.40s update=1.26s elapsed=44.9m
+  [interleaved] total_eps≈10820 | morr=0.87 | visu=0.77 | dyna=0.33 | visu=0.20 | above25=3 | score=8.17 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 1600 (morr) collect=0.40s update=1.23s elapsed=45.6m
+  . rollout 1620 (morr) collect=0.40s update=1.26s elapsed=46.1m
+  . rollout 1640 (morr) collect=0.41s update=1.22s elapsed=46.7m
+  . rollout 1660 (morr) collect=0.43s update=1.31s elapsed=47.2m
+  . rollout 1680 (morr) collect=0.40s update=1.23s elapsed=47.8m
+  . rollout 1700 (morr) collect=0.42s update=1.24s elapsed=48.4m
+  . rollout 1720 (morr) collect=0.42s update=1.30s elapsed=48.9m
+  [interleaved] total_eps≈11803 | morr=0.77 | visu=0.80 | dyna=0.77 | visu=0.20 | above25=3 | score=8.53 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 1740 (morr) collect=0.39s update=1.27s elapsed=49.6m
+  . rollout 1760 (morr) collect=0.41s update=1.27s elapsed=50.1m
+  . rollout 1780 (morr) collect=0.40s update=1.24s elapsed=50.7m
+  . rollout 1800 (morr) collect=0.40s update=1.23s elapsed=51.2m
+  . rollout 1820 (morr) collect=0.40s update=1.24s elapsed=51.8m
+  . rollout 1840 (morr) collect=0.41s update=1.24s elapsed=52.3m
+  . rollout 1860 (morr) collect=0.43s update=1.29s elapsed=52.9m
+  [interleaved] total_eps≈12786 | morr=0.60 | visu=1.00 | dyna=0.70 | visu=0.23 | above25=3 | score=8.53 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 1880 (morr) collect=0.38s update=1.25s elapsed=53.5m
+  . rollout 1900 (morr) collect=0.39s update=1.24s elapsed=54.1m
+  . rollout 1920 (morr) collect=0.40s update=1.26s elapsed=54.6m
+  . rollout 1940 (morr) collect=0.39s update=1.23s elapsed=55.2m
+  . rollout 1960 (morr) collect=0.40s update=1.23s elapsed=55.7m
+  . rollout 1980 (morr) collect=0.41s update=1.23s elapsed=56.3m
+  . rollout 2000 (morr) collect=0.40s update=1.23s elapsed=56.9m
+  [interleaved] total_eps≈13769 | morr=1.00 | visu=0.93 | dyna=0.60 | visu=0.17 | above25=3 | score=8.70 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 2020 (morr) collect=0.49s update=1.24s elapsed=57.5m
+  . rollout 2040 (morr) collect=0.41s update=1.34s elapsed=58.0m
+  . rollout 2060 (morr) collect=0.41s update=1.22s elapsed=58.6m
+  . rollout 2080 (morr) collect=0.41s update=1.22s elapsed=59.1m
+  . rollout 2100 (morr) collect=0.40s update=1.22s elapsed=59.7m
+  . rollout 2120 (morr) collect=0.40s update=1.28s elapsed=60.2m
+  . rollout 2140 (morr) collect=0.41s update=1.24s elapsed=60.8m
+  . rollout 2160 (morr) collect=0.41s update=1.25s elapsed=61.4m
+  [interleaved] total_eps≈14752 | morr=0.93 | visu=0.93 | dyna=0.83 | visu=0.13 | above25=3 | score=8.83 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 2180 (morr) collect=0.42s update=1.23s elapsed=62.0m
+  . rollout 2200 (morr) collect=0.43s update=1.30s elapsed=62.5m
+  . rollout 2220 (morr) collect=0.41s update=1.25s elapsed=63.1m
+  . rollout 2240 (morr) collect=0.55s update=1.27s elapsed=63.6m
+  . rollout 2260 (morr) collect=0.40s update=1.25s elapsed=64.2m
+  . rollout 2280 (morr) collect=0.40s update=1.24s elapsed=64.8m
+  . rollout 2300 (morr) collect=0.41s update=1.26s elapsed=65.3m
+  [interleaved] total_eps≈15735 | morr=0.93 | visu=0.93 | dyna=0.73 | visu=0.53 | above25=4 | score=11.13 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 2320 (morr) collect=0.41s update=1.24s elapsed=65.9m
+  . rollout 2340 (morr) collect=0.43s update=1.35s elapsed=66.5m
+  . rollout 2360 (morr) collect=0.40s update=1.27s elapsed=67.0m
+  . rollout 2380 (morr) collect=0.41s update=1.27s elapsed=67.6m
+  . rollout 2400 (morr) collect=0.41s update=1.24s elapsed=68.1m
+  . rollout 2420 (morr) collect=0.41s update=1.26s elapsed=68.7m
+  . rollout 2440 (morr) collect=0.41s update=1.23s elapsed=69.2m
+  [interleaved] total_eps≈16719 | morr=0.97 | visu=1.00 | dyna=0.83 | visu=0.43 | above25=4 | score=11.23 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 2460 (morr) collect=0.39s update=1.24s elapsed=69.8m
+  . rollout 2480 (morr) collect=0.41s update=1.24s elapsed=70.4m
+  . rollout 2500 (morr) collect=0.40s update=1.22s elapsed=70.9m
+  . rollout 2520 (morr) collect=0.41s update=1.23s elapsed=71.5m
+  . rollout 2540 (morr) collect=0.40s update=1.31s elapsed=72.0m
+  . rollout 2560 (morr) collect=0.40s update=1.23s elapsed=72.6m
+  . rollout 2580 (morr) collect=0.41s update=1.23s elapsed=73.1m
+  [interleaved] total_eps≈17702 | morr=1.00 | visu=0.93 | dyna=0.90 | visu=0.33 | above25=4 | score=11.17 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 2600 (morr) collect=0.41s update=1.24s elapsed=73.7m
+  . rollout 2620 (morr) collect=0.42s update=1.25s elapsed=74.3m
+  . rollout 2640 (morr) collect=0.40s update=1.24s elapsed=74.8m
+  . rollout 2660 (morr) collect=0.40s update=1.23s elapsed=75.4m
+  . rollout 2680 (morr) collect=0.42s update=1.24s elapsed=76.0m
+  . rollout 2700 (morr) collect=0.45s update=1.30s elapsed=76.5m
+  . rollout 2720 (morr) collect=0.41s update=1.29s elapsed=77.1m
+  [interleaved] total_eps≈18685 | morr=0.97 | visu=0.97 | dyna=0.97 | visu=0.53 | above25=4 | score=11.43 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 2740 (morr) collect=0.43s update=1.28s elapsed=77.7m
+  . rollout 2760 (morr) collect=0.43s update=1.28s elapsed=78.3m
+  . rollout 2780 (morr) collect=0.47s update=1.24s elapsed=78.8m
+  . rollout 2800 (morr) collect=0.42s update=1.36s elapsed=79.4m
+  . rollout 2820 (morr) collect=0.43s update=1.32s elapsed=80.0m
+  . rollout 2840 (morr) collect=0.42s update=1.27s elapsed=80.6m
+  . rollout 2860 (morr) collect=0.42s update=1.24s elapsed=81.2m
+  . rollout 2880 (morr) collect=0.41s update=1.24s elapsed=81.7m
+  [interleaved] total_eps≈19668 | morr=1.00 | visu=0.97 | dyna=0.77 | visu=0.67 | above25=4 | score=11.40 | obj_ent=0.000 | 4.0 ep/s
+  . rollout 2900 (morr) collect=0.42s update=1.27s elapsed=82.3m
+  . rollout 2920 (morr) collect=0.41s update=1.27s elapsed=82.9m
+  [restoring best model: sum=11.43]
+
+======================================================================
+PHASE 2: EVALUATION
+======================================================================
+  ✓ fixed-approach on morris_water_maze: success_rate=0.930
+  ✓ fixed-approach on visual_foraging: success_rate=0.980
+  ✓ fixed-approach on dynamic_obstacles: success_rate=0.850
+  ✓ fixed-approach on visual_search: success_rate=0.610
+
+  fixed-approach: multi-task avg=0.843, zero-shot avg=0.857
+  Saved ablation report: results_ablation_fixed-approach/seed123/evaluation_report.json
+
+✓ Experiment complete. Results saved to: results_ablation_fixed-approach/seed123

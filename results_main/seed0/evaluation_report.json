@@ -1,0 +1,1917 @@
+{
+  "multitask": {
+    "augmented": {
+      "morris_water_maze": {
+        "success_rate": 0.98,
+        "avg_episode_length": 14.37,
+        "avg_reward": 0.8461000000000004,
+        "std_reward": 0.5516228693591273,
+        "strategy_entropy": 1.0947334883541824,
+        "strategy_distribution": {
+          "EXPLORE": 0.29227557411273486,
+          "APPROACH": 0.3542101600556715,
+          "EXPLOIT": 0.3535142658315936
+        }
+      },
+      "visual_foraging": {
+        "success_rate": 0.97,
+        "avg_episode_length": 23.04,
+        "avg_reward": 1.2946000000000004,
+        "std_reward": 0.7657851134619926,
+        "strategy_entropy": 0.7547877268759604,
+        "strategy_distribution": {
+          "EXPLORE": 0.69921875,
+          "APPROACH": 0.2456597222222222,
+          "EXPLOIT": 0.055121527777777776
+        }
+      },
+      "dynamic_obstacles": {
+        "success_rate": 0.87,
+        "avg_episode_length": 71.28,
+        "avg_reward": 0.1117000000000011,
+        "std_reward": 0.9184792376531941,
+        "strategy_entropy": 0.7390649469401375,
+        "strategy_distribution": {
+          "EXPLORE": 0.6597923681257014,
+          "APPROACH": 0.3117283950617284,
+          "EXPLOIT": 0.028479236812570145
+        }
+      },
+      "visual_search": {
+        "success_rate": 0.21,
+        "avg_episode_length": 242.27,
+        "avg_reward": -2.2105999999999835,
+        "std_reward": 1.5383815001487684,
+        "strategy_entropy": 0.9159174833453219,
+        "strategy_distribution": {
+          "EXPLORE": 0.6226936888595369,
+          "APPROACH": 0.22817517645602015,
+          "EXPLOIT": 0.14913113468444297
+        }
+      }
+    },
+    "baseline": {
+      "morris_water_maze": {
+        "success_rate": 0.2,
+        "avg_episode_length": 241.32,
+        "avg_reward": -2.2111999999999834,
+        "std_reward": 1.5777219526900088
+      },
+      "visual_foraging": {
+        "success_rate": 0.49,
+        "avg_episode_length": 143.01,
+        "avg_reward": -0.6390999999999933,
+        "std_reward": 2.0498263804527377
+      },
+      "dynamic_obstacles": {
+        "success_rate": 0.53,
+        "avg_episode_length": 199.19,
+        "avg_reward": -1.490899999999991,
+        "std_reward": 1.390986768448922
+      },
+      "visual_search": {
+        "success_rate": 0.2,
+        "avg_episode_length": 241.91,
+        "avg_reward": -2.2170999999999834,
+        "std_reward": 1.565861612659297
+      }
+    },
+    "augmented_avg_success": 0.7575,
+    "baseline_avg_success": 0.355,
+    "generalizability_delta": 0.40249999999999997
+  },
+  "zero_shot_transfer": {
+    "augmented": {
+      "morris_water_maze": {
+        "mean_success": 0.968,
+        "std_success": 0.01720465053408527
+      },
+      "visual_foraging": {
+        "mean_success": 0.9640000000000001,
+        "std_success": 0.016248076809271934
+      },
+      "dynamic_obstacles": {
+        "mean_success": 0.8859999999999999,
+        "std_success": 0.038262252939417984
+      },
+      "visual_search": {
+        "mean_success": 0.21200000000000002,
+        "std_success": 0.03187475490101846
+      }
+    },
+    "baseline": {
+      "morris_water_maze": {
+        "mean_success": 0.15800000000000003,
+        "std_success": 0.017204650534085254
+      },
+      "visual_foraging": {
+        "mean_success": 0.488,
+        "std_success": 0.05344155686354955
+      },
+      "dynamic_obstacles": {
+        "mean_success": 0.42000000000000004,
+        "std_success": 0.04516635916254486
+      },
+      "visual_search": {
+        "mean_success": 0.13399999999999998,
+        "std_success": 0.03261901286060018
+      }
+    }
+  },
+  "few_shot_adaptation": {
+    "augmented": {
+      "episodes_to_threshold": 20,
+      "final_success_rate": 1.0,
+      "reached_threshold": true
+    },
+    "baseline": {
+      "episodes_to_threshold": 51,
+      "final_success_rate": 0.7,
+      "reached_threshold": true
+    }
+  },
+  "catastrophic_forgetting": {
+    "morris_water_maze": {
+      "before": 0.95,
+      "after": 0.96,
+      "forgetting": 0
+    },
+    "visual_foraging": {
+      "before": 0.98,
+      "after": 0.92,
+      "forgetting": 0.05999999999999994
+    },
+    "dynamic_obstacles": {
+      "before": 0.86,
+      "after": 0.87,
+      "forgetting": 0
+    },
+    "visual_search": {
+      "before": 0.18,
+      "after": 0.24,
+      "forgetting": 0
+    },
+    "avg_forgetting": 0.014999999999999986
+  },
+  "strategy_diversity": {
+    "morris_water_maze": {
+      "strategy_entropy": 1.0089895619414149,
+      "strategy_distribution": {
+        "EXPLORE": 0.3159630606860158,
+        "APPROACH": 0.512532981530343,
+        "EXPLOIT": 0.17150395778364116
+      },
+      "success_rate": 0.98
+    },
+    "visual_foraging": {
+      "strategy_entropy": 0.2994985217972194,
+      "strategy_distribution": {
+        "EXPLORE": 0.9270346117867165,
+        "APPROACH": 0.05706267539756782,
+        "EXPLOIT": 0.015902712815715623
+      },
+      "success_rate": 1.0
+    },
+    "dynamic_obstacles": {
+      "strategy_entropy": 0.7711349322786905,
+      "strategy_distribution": {
+        "EXPLORE": 0.6856106408706167,
+        "APPROACH": 0.25755743651753327,
+        "EXPLOIT": 0.056831922611850064
+      },
+      "success_rate": 0.83
+    },
+    "visual_search": {
+      "strategy_entropy": 0.8746790821388276,
+      "strategy_distribution": {
+        "EXPLORE": 0.5994610281923715,
+        "APPROACH": 0.31969320066334994,
+        "EXPLOIT": 0.08084577114427861
+      },
+      "success_rate": 0.21
+    }
+  },
+  "run": {
+    "seed": 0,
+    "meta_mode": "learned",
+    "episodes_per_task": 5000,
+    "parameters": {
+      "augmented": 231050,
+      "baseline": 231590
+    }
+  },
+  "_per_task": {
+    "morris_water_maze": {
+      "augmented": {
+        "eval_history": [
+          {
+            "episode": 252.58666666666645,
+            "success_rate": 0.26666666666666666,
+            "avg_episode_length": 226.23333333333332,
+            "avg_reward": -1.992999999999985,
+            "std_reward": 1.6749908457461202,
+            "strategy_entropy": 1.0466052905349503,
+            "strategy_distribution": {
+              "EXPLORE": 0.26536024753204657,
+              "APPROACH": 0.4891704729630175,
+              "EXPLOIT": 0.2454692795049359
+            }
+          },
+          {
+            "episode": 498.346666666666,
+            "success_rate": 0.3333333333333333,
+            "avg_episode_length": 210.03333333333333,
+            "avg_reward": -1.763666666666653,
+            "std_reward": 1.7613980873789403,
+            "strategy_entropy": 0.4177373703304602,
+            "strategy_distribution": {
+              "EXPLORE": 0.861926678305031,
+              "APPROACH": 0.0034915092842405966,
+              "EXPLOIT": 0.13458181241072845
+            }
+          },
+          {
+            "episode": 744.1066666666675,
+            "success_rate": 0.5,
+            "avg_episode_length": 162.13333333333333,
+            "avg_reward": -1.1163333333333236,
+            "std_reward": 1.890254803517818,
+            "strategy_entropy": 0.8626718074453371,
+            "strategy_distribution": {
+              "EXPLORE": 0.25390625,
+              "APPROACH": 0.6449424342105263,
+              "EXPLOIT": 0.10115131578947369
+            }
+          },
+          {
+            "episode": 989.8666666666691,
+            "success_rate": 0.4666666666666667,
+            "avg_episode_length": 179.06666666666666,
+            "avg_reward": -1.3193333333333226,
+            "std_reward": 1.8186807184207785,
+            "strategy_entropy": 1.0028135361200503,
+            "strategy_distribution": {
+              "EXPLORE": 0.5443037974683544,
+              "APPROACH": 0.20513775130305287,
+              "EXPLOIT": 0.2505584512285927
+            }
+          },
+          {
+            "episode": 1235.626666666667,
+            "success_rate": 0.4,
+            "avg_episode_length": 211.23333333333332,
+            "avg_reward": -1.7083333333333208,
+            "std_reward": 1.6824864206154901,
+            "strategy_entropy": 0.9125206854274568,
+            "strategy_distribution": {
+              "EXPLORE": 0.2100362947767082,
+              "APPROACH": 0.6296354741991479,
+              "EXPLOIT": 0.16032823102414392
+            }
+          },
+          {
+            "episode": 1481.3866666666645,
+            "success_rate": 0.3,
+            "avg_episode_length": 221.56666666666666,
+            "avg_reward": -1.9126666666666523,
+            "std_reward": 1.6746162412790355,
+            "strategy_entropy": 0.679566138408485,
+            "strategy_distribution": {
+              "EXPLORE": 0.41778245825184296,
+              "APPROACH": 0.5822175417481571,
+              "EXPLOIT": 0.0
+            }
+          },
+          {
+            "episode": 1727.146666666662,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 146.8,
+            "avg_reward": -0.895666666666658,
+            "std_reward": 1.8536229090321616,
+            "strategy_entropy": 0.8703747408553495,
+            "strategy_distribution": {
+              "EXPLORE": 0.3653496821071753,
+              "APPROACH": 0.5676657584014533,
+              "EXPLOIT": 0.06698455949137148
+            }
+          },
+          {
+            "episode": 1972.9066666666595,
+            "success_rate": 0.5,
+            "avg_episode_length": 158.0,
+            "avg_reward": -1.0749999999999897,
+            "std_reward": 1.9265768433502195,
+            "strategy_entropy": 0.7516650174649387,
+            "strategy_distribution": {
+              "EXPLORE": 0.7151898734177216,
+              "APPROACH": 0.2187763713080169,
+              "EXPLOIT": 0.0660337552742616
+            }
+          },
+          {
+            "episode": 2218.6666666666624,
+            "success_rate": 0.43333333333333335,
+            "avg_episode_length": 178.4,
+            "avg_reward": -1.346333333333322,
+            "std_reward": 1.8930935587609465,
+            "strategy_entropy": 1.0810941165047145,
+            "strategy_distribution": {
+              "EXPLORE": 0.398542600896861,
+              "APPROACH": 0.35033632286995514,
+              "EXPLOIT": 0.25112107623318386
+            }
+          },
+          {
+            "episode": 2464.426666666668,
+            "success_rate": 0.9,
+            "avg_episode_length": 44.6,
+            "avg_reward": 0.46300000000000197,
+            "std_reward": 1.1589338491331818,
+            "strategy_entropy": 1.0805861658786404,
+            "strategy_distribution": {
+              "EXPLORE": 0.28550074738415543,
+              "APPROACH": 0.28998505231689087,
+              "EXPLOIT": 0.42451420029895365
+            }
+          },
+          {
+            "episode": 2710.186666666674,
+            "success_rate": 0.7666666666666667,
+            "avg_episode_length": 77.43333333333334,
+            "avg_reward": 4.688841907333578e-15,
+            "std_reward": 1.6561441161122739,
+            "strategy_entropy": 0.7181162188308837,
+            "strategy_distribution": {
+              "EXPLORE": 0.5716745587602239,
+              "APPROACH": 0.4214377959535084,
+              "EXPLOIT": 0.006887645286267757
+            }
+          },
+          {
+            "episode": 2955.9466666666794,
+            "success_rate": 0.8666666666666667,
+            "avg_episode_length": 51.53333333333333,
+            "avg_reward": 0.3600000000000026,
+            "std_reward": 1.3302255447855384,
+            "strategy_entropy": 0.7256862296183128,
+            "strategy_distribution": {
+              "EXPLORE": 0.40815006468305304,
+              "APPROACH": 0.5821474773609314,
+              "EXPLOIT": 0.009702457956015523
+            }
+          },
+          {
+            "episode": 3201.706666666685,
+            "success_rate": 1.0,
+            "avg_episode_length": 9.466666666666667,
+            "avg_reward": 0.9153333333333331,
+            "std_reward": 0.046168772515148754,
+            "strategy_entropy": 0.21747378634023964,
+            "strategy_distribution": {
+              "EXPLORE": 0.954225352112676,
+              "APPROACH": 0.02464788732394366,
+              "EXPLOIT": 0.02112676056338028
+            }
+          },
+          {
+            "episode": 3447.466666666691,
+            "success_rate": 0.8666666666666667,
+            "avg_episode_length": 46.766666666666666,
+            "avg_reward": 0.40766666666666934,
+            "std_reward": 1.3373199151869148,
+            "strategy_entropy": 0.6928176651693737,
+            "strategy_distribution": {
+              "EXPLORE": 0.5702066999287242,
+              "APPROACH": 0.42836778332145403,
+              "EXPLOIT": 0.0014255167498218105
+            }
+          },
+          {
+            "episode": 3693.2266666666965,
+            "success_rate": 0.9666666666666667,
+            "avg_episode_length": 18.033333333333335,
+            "avg_reward": 0.7960000000000007,
+            "std_reward": 0.7062275365159081,
+            "strategy_entropy": 0.07441385404035888,
+            "strategy_distribution": {
+              "EXPLORE": 0.9870609981515711,
+              "APPROACH": 0.0018484288354898336,
+              "EXPLOIT": 0.011090573012939002
+            }
+          },
+          {
+            "episode": 3938.986666666702,
+            "success_rate": 1.0,
+            "avg_episode_length": 9.1,
+            "avg_reward": 0.9189999999999998,
+            "std_reward": 0.06579513659838393,
+            "strategy_entropy": 0.47177311817068274,
+            "strategy_distribution": {
+              "EXPLORE": 0.8717948717948718,
+              "APPROACH": 0.06593406593406594,
+              "EXPLOIT": 0.06227106227106227
+            }
+          },
+          {
+            "episode": 4184.746666666708,
+            "success_rate": 1.0,
+            "avg_episode_length": 9.233333333333333,
+            "avg_reward": 0.9176666666666667,
+            "std_reward": 0.03611863169550523,
+            "strategy_entropy": 0.69314066410481,
+            "strategy_distribution": {
+              "EXPLORE": 0.4981949458483754,
+              "APPROACH": 0.5018050541516246,
+              "EXPLOIT": 0.0
+            }
+          },
+          {
+            "episode": 4430.5066666667135,
+            "success_rate": 1.0,
+            "avg_episode_length": 9.9,
+            "avg_reward": 0.9109999999999999,
+            "std_reward": 0.06709942871093118,
+            "strategy_entropy": 0.8000120331977751,
+            "strategy_distribution": {
+              "EXPLORE": 0.37037037037037035,
+              "APPROACH": 0.5925925925925926,
+              "EXPLOIT": 0.037037037037037035
+            }
+          },
+          {
+            "episode": 4676.266666666719,
+            "success_rate": 1.0,
+            "avg_episode_length": 9.4,
+            "avg_reward": 0.9159999999999999,
+            "std_reward": 0.05388877434122992,
+            "strategy_entropy": 0.8405480234460603,
+            "strategy_distribution": {
+              "EXPLORE": 0.5921985815602837,
+              "APPROACH": 0.35106382978723405,
+              "EXPLOIT": 0.05673758865248227
+            }
+          },
+          {
+            "episode": 4922.026666666725,
+            "success_rate": 1.0,
+            "avg_episode_length": 10.066666666666666,
+            "avg_reward": 0.9093333333333332,
+            "std_reward": 0.03758841429069452,
+            "strategy_entropy": 0.6174481712692461,
+            "strategy_distribution": {
+              "EXPLORE": 0.6920529801324503,
+              "APPROACH": 0.3079470198675497,
+              "EXPLOIT": 0.0
+            }
+          }
+        ],
+        "final": {
+          "success_rate": 0.95,
+          "avg_episode_length": 23.52,
+          "avg_reward": 0.7243000000000012,
+          "std_reward": 0.8555761275304452,
+          "strategy_entropy": 1.0123431157048555,
+          "strategy_distribution": {
+            "EXPLORE": 0.1636904761904762,
+            "APPROACH": 0.491921768707483,
+            "EXPLOIT": 0.34438775510204084
+          }
+        }
+      },
+      "baseline": {
+        "eval_history": [
+          {
+            "episode": 252.58666666666645,
+            "success_rate": 0.06666666666666667,
+            "avg_episode_length": 280.26666666666665,
+            "avg_reward": -2.7353333333333154,
+            "std_reward": 0.990305452317051
+          },
+          {
+            "episode": 498.346666666666,
+            "success_rate": 0.23333333333333334,
+            "avg_episode_length": 231.43333333333334,
+            "avg_reward": -2.078666666666651,
+            "std_reward": 1.670167124039446
+          },
+          {
+            "episode": 744.1066666666675,
+            "success_rate": 0.16666666666666666,
+            "avg_episode_length": 251.0,
+            "avg_reward": -2.34166666666665,
+            "std_reward": 1.4721777142119088
+          },
+          {
+            "episode": 989.8666666666691,
+            "success_rate": 0.1,
+            "avg_episode_length": 270.6666666666667,
+            "avg_reward": -2.6056666666666493,
+            "std_reward": 1.1830741969781695
+          },
+          {
+            "episode": 1235.626666666667,
+            "success_rate": 0.26666666666666666,
+            "avg_episode_length": 222.53333333333333,
+            "avg_reward": -1.9559999999999853,
+            "std_reward": 1.7313647795886258
+          },
+          {
+            "episode": 1481.3866666666645,
+            "success_rate": 0.23333333333333334,
+            "avg_episode_length": 231.33333333333334,
+            "avg_reward": -2.077666666666651,
+            "std_reward": 1.6720121278135298
+          },
+          {
+            "episode": 1727.146666666662,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 261.23333333333335,
+            "avg_reward": -2.4776666666666496,
+            "std_reward": 1.3317224018373863
+          },
+          {
+            "episode": 1972.9066666666595,
+            "success_rate": 0.16666666666666666,
+            "avg_episode_length": 251.3,
+            "avg_reward": -2.34466666666665,
+            "std_reward": 1.4654390316746493
+          },
+          {
+            "episode": 2218.6666666666624,
+            "success_rate": 0.16666666666666666,
+            "avg_episode_length": 251.23333333333332,
+            "avg_reward": -2.343999999999984,
+            "std_reward": 1.4669619399743512
+          },
+          {
+            "episode": 2464.426666666668,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 261.03333333333336,
+            "avg_reward": -2.47566666666665,
+            "std_reward": 1.3368163257863328
+          },
+          {
+            "episode": 2710.186666666674,
+            "success_rate": 0.1,
+            "avg_episode_length": 270.7,
+            "avg_reward": -2.6059999999999826,
+            "std_reward": 1.1820338404631172
+          },
+          {
+            "episode": 2955.9466666666794,
+            "success_rate": 0.2,
+            "avg_episode_length": 241.8,
+            "avg_reward": -2.2159999999999838,
+            "std_reward": 1.568019132536327
+          },
+          {
+            "episode": 3201.706666666685,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 261.1,
+            "avg_reward": -2.4763333333333164,
+            "std_reward": 1.3351915800946086
+          },
+          {
+            "episode": 3447.466666666691,
+            "success_rate": 0.23333333333333334,
+            "avg_episode_length": 231.46666666666667,
+            "avg_reward": -2.078999999999984,
+            "std_reward": 1.6695854774963268
+          },
+          {
+            "episode": 3693.2266666666965,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 261.0,
+            "avg_reward": -2.4753333333333165,
+            "std_reward": 1.337716296113967
+          },
+          {
+            "episode": 3938.986666666702,
+            "success_rate": 0.06666666666666667,
+            "avg_episode_length": 280.5,
+            "avg_reward": -2.737666666666649,
+            "std_reward": 0.9815623034507516
+          },
+          {
+            "episode": 4184.746666666708,
+            "success_rate": 0.23333333333333334,
+            "avg_episode_length": 232.2,
+            "avg_reward": -2.0863333333333176,
+            "std_reward": 1.6562175447553764
+          },
+          {
+            "episode": 4430.5066666667135,
+            "success_rate": 0.16666666666666666,
+            "avg_episode_length": 251.16666666666666,
+            "avg_reward": -2.3433333333333173,
+            "std_reward": 1.468494315806341
+          },
+          {
+            "episode": 4676.266666666719,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 260.9,
+            "avg_reward": -2.4743333333333166,
+            "std_reward": 1.3402877385928007
+          },
+          {
+            "episode": 4922.026666666725,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 261.3,
+            "avg_reward": -2.4783333333333166,
+            "std_reward": 1.3300277774877
+          }
+        ],
+        "final": {
+          "success_rate": 0.15,
+          "avg_episode_length": 256.05,
+          "avg_reward": -2.408999999999982,
+          "std_reward": 1.4069950248668188
+        }
+      }
+    },
+    "visual_foraging": {
+      "augmented": {
+        "eval_history": [
+          {
+            "episode": 245.7599999999998,
+            "success_rate": 0.3333333333333333,
+            "avg_episode_length": 208.4,
+            "avg_reward": -1.5506666666666575,
+            "std_reward": 1.8293166908863894,
+            "strategy_entropy": 1.016618663689241,
+            "strategy_distribution": {
+              "EXPLORE": 0.21928982725527832,
+              "APPROACH": 0.2514395393474088,
+              "EXPLOIT": 0.5292706333973128
+            }
+          },
+          {
+            "episode": 491.51999999999936,
+            "success_rate": 0.36666666666666664,
+            "avg_episode_length": 201.3,
+            "avg_reward": -1.386333333333322,
+            "std_reward": 2.0240116655351046,
+            "strategy_entropy": 0.666697279674071,
+            "strategy_distribution": {
+              "EXPLORE": 0.7787713197549263,
+              "APPROACH": 0.07021029971849645,
+              "EXPLOIT": 0.15101838052657726
+            }
+          },
+          {
+            "episode": 737.2800000000008,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 112.26666666666667,
+            "avg_reward": -0.262666666666663,
+            "std_reward": 1.8917380603267648,
+            "strategy_entropy": 0.9783368596484816,
+            "strategy_distribution": {
+              "EXPLORE": 0.41270783847980996,
+              "APPROACH": 0.4649643705463183,
+              "EXPLOIT": 0.12232779097387174
+            }
+          },
+          {
+            "episode": 983.0400000000024,
+            "success_rate": 0.6,
+            "avg_episode_length": 146.33333333333334,
+            "avg_reward": -0.49999999999999445,
+            "std_reward": 1.9055917716027153,
+            "strategy_entropy": 1.0833348036382497,
+            "strategy_distribution": {
+              "EXPLORE": 0.4132118451025057,
+              "APPROACH": 0.3136674259681093,
+              "EXPLOIT": 0.273120728929385
+            }
+          },
+          {
+            "episode": 1228.8000000000004,
+            "success_rate": 0.7,
+            "avg_episode_length": 103.63333333333334,
+            "avg_reward": 0.03366666666666986,
+            "std_reward": 1.721732622163559,
+            "strategy_entropy": 0.890028423838852,
+            "strategy_distribution": {
+              "EXPLORE": 0.6429720167256352,
+              "APPROACH": 0.21871984560952074,
+              "EXPLOIT": 0.138308137664844
+            }
+          },
+          {
+            "episode": 1474.559999999998,
+            "success_rate": 0.6333333333333333,
+            "avg_episode_length": 130.6,
+            "avg_reward": -0.25933333333332886,
+            "std_reward": 1.9130515471942202,
+            "strategy_entropy": 0.854915791187089,
+            "strategy_distribution": {
+              "EXPLORE": 0.6069423175089331,
+              "APPROACH": 0.3226135783563042,
+              "EXPLOIT": 0.07044410413476264
+            }
+          },
+          {
+            "episode": 1720.3199999999954,
+            "success_rate": 0.6333333333333333,
+            "avg_episode_length": 130.8,
+            "avg_reward": -0.30133333333332823,
+            "std_reward": 1.8256939015678928,
+            "strategy_entropy": 0.9917886365423404,
+            "strategy_distribution": {
+              "EXPLORE": 0.3162589194699286,
+              "APPROACH": 0.5272680937818552,
+              "EXPLOIT": 0.1564729867482161
+            }
+          },
+          {
+            "episode": 1966.0799999999929,
+            "success_rate": 0.6,
+            "avg_episode_length": 111.13333333333334,
+            "avg_reward": -0.20133333333332848,
+            "std_reward": 1.8971675964154728,
+            "strategy_entropy": 0.8574864878788457,
+            "strategy_distribution": {
+              "EXPLORE": 0.5773845230953809,
+              "APPROACH": 0.0620875824835033,
+              "EXPLOIT": 0.36052789442111577
+            }
+          },
+          {
+            "episode": 2211.8399999999956,
+            "success_rate": 0.6666666666666666,
+            "avg_episode_length": 113.73333333333333,
+            "avg_reward": -0.08733333333332946,
+            "std_reward": 1.7567165078318323,
+            "strategy_entropy": 0.990028579407354,
+            "strategy_distribution": {
+              "EXPLORE": 0.5603751465416178,
+              "APPROACH": 0.23065650644783117,
+              "EXPLOIT": 0.208968347010551
+            }
+          },
+          {
+            "episode": 2457.6000000000013,
+            "success_rate": 0.8666666666666667,
+            "avg_episode_length": 59.53333333333333,
+            "avg_reward": 0.7913333333333356,
+            "std_reward": 1.4792447021669104,
+            "strategy_entropy": 1.0954705239427323,
+            "strategy_distribution": {
+              "EXPLORE": 0.36786114221724525,
+              "APPROACH": 0.32866741321388576,
+              "EXPLOIT": 0.303471444568869
+            }
+          },
+          {
+            "episode": 2703.360000000007,
+            "success_rate": 0.7333333333333333,
+            "avg_episode_length": 81.23333333333333,
+            "avg_reward": 0.28766666666666885,
+            "std_reward": 1.7336487213068494,
+            "strategy_entropy": 0.5104555079103598,
+            "strategy_distribution": {
+              "EXPLORE": 0.8128846942962659,
+              "APPROACH": 0.18054985638079607,
+              "EXPLOIT": 0.006565449322938038
+            }
+          },
+          {
+            "episode": 2949.1200000000126,
+            "success_rate": 0.8333333333333334,
+            "avg_episode_length": 46.96666666666667,
+            "avg_reward": 0.8370000000000013,
+            "std_reward": 1.4437801079111705,
+            "strategy_entropy": 0.7614698280535298,
+            "strategy_distribution": {
+              "EXPLORE": 0.7281760113555713,
+              "APPROACH": 0.09581263307310149,
+              "EXPLOIT": 0.1760113555713272
+            }
+          },
+          {
+            "episode": 3194.8800000000183,
+            "success_rate": 0.9333333333333333,
+            "avg_episode_length": 36.43333333333333,
+            "avg_reward": 1.1190000000000007,
+            "std_reward": 1.0637178510613894,
+            "strategy_entropy": 0.815587950796304,
+            "strategy_distribution": {
+              "EXPLORE": 0.6944190301921317,
+              "APPROACH": 0.11070448307410796,
+              "EXPLOIT": 0.1948764867337603
+            }
+          },
+          {
+            "episode": 3440.640000000024,
+            "success_rate": 0.9,
+            "avg_episode_length": 42.733333333333334,
+            "avg_reward": 0.9360000000000003,
+            "std_reward": 1.219979781253224,
+            "strategy_entropy": 0.41287404657335947,
+            "strategy_distribution": {
+              "EXPLORE": 0.8923556942277691,
+              "APPROACH": 0.06708268330733229,
+              "EXPLOIT": 0.0405616224648986
+            }
+          },
+          {
+            "episode": 3686.4000000000296,
+            "success_rate": 0.9333333333333333,
+            "avg_episode_length": 40.43333333333333,
+            "avg_reward": 1.0790000000000015,
+            "std_reward": 1.16597984545188,
+            "strategy_entropy": 0.5319279460905848,
+            "strategy_distribution": {
+              "EXPLORE": 0.8211046990931574,
+              "APPROACH": 0.15910964550700743,
+              "EXPLOIT": 0.01978565539983512
+            }
+          },
+          {
+            "episode": 3932.1600000000353,
+            "success_rate": 0.9666666666666667,
+            "avg_episode_length": 25.166666666666668,
+            "avg_reward": 1.2616666666666667,
+            "std_reward": 0.815459311608427,
+            "strategy_entropy": 0.8352851198394327,
+            "strategy_distribution": {
+              "EXPLORE": 0.6874172185430464,
+              "APPROACH": 0.176158940397351,
+              "EXPLOIT": 0.13642384105960265
+            }
+          },
+          {
+            "episode": 4177.920000000041,
+            "success_rate": 1.0,
+            "avg_episode_length": 10.0,
+            "avg_reward": 1.45,
+            "std_reward": 0.17366634676873935,
+            "strategy_entropy": 0.5432727813369008,
+            "strategy_distribution": {
+              "EXPLORE": 0.7666666666666667,
+              "APPROACH": 0.23333333333333334,
+              "EXPLOIT": 0.0
+            }
+          },
+          {
+            "episode": 4423.680000000047,
+            "success_rate": 0.9666666666666667,
+            "avg_episode_length": 25.833333333333332,
+            "avg_reward": 1.2983333333333336,
+            "std_reward": 0.8200613120709648,
+            "strategy_entropy": 0.35841527557282793,
+            "strategy_distribution": {
+              "EXPLORE": 0.9070967741935484,
+              "APPROACH": 0.07225806451612904,
+              "EXPLOIT": 0.02064516129032258
+            }
+          },
+          {
+            "episode": 4669.440000000052,
+            "success_rate": 1.0,
+            "avg_episode_length": 18.0,
+            "avg_reward": 1.4199999999999997,
+            "std_reward": 0.3173851498311373,
+            "strategy_entropy": 0.7040143048758302,
+            "strategy_distribution": {
+              "EXPLORE": 0.7037037037037037,
+              "APPROACH": 0.02962962962962963,
+              "EXPLOIT": 0.26666666666666666
+            }
+          },
+          {
+            "episode": 4915.200000000058,
+            "success_rate": 0.9333333333333333,
+            "avg_episode_length": 22.6,
+            "avg_reward": 1.2140000000000006,
+            "std_reward": 0.9817793370542403,
+            "strategy_entropy": 1.085034138696118,
+            "strategy_distribution": {
+              "EXPLORE": 0.40117994100294985,
+              "APPROACH": 0.2669616519174041,
+              "EXPLOIT": 0.33185840707964603
+            }
+          }
+        ],
+        "final": {
+          "success_rate": 0.98,
+          "avg_episode_length": 13.2,
+          "avg_reward": 1.3980000000000001,
+          "std_reward": 0.47200211863931263,
+          "strategy_entropy": 0.4788963899191172,
+          "strategy_distribution": {
+            "EXPLORE": 0.8575757575757575,
+            "APPROACH": 0.11515151515151516,
+            "EXPLOIT": 0.02727272727272727
+          }
+        }
+      },
+      "baseline": {
+        "eval_history": [
+          {
+            "episode": 245.7599999999998,
+            "success_rate": 0.26666666666666666,
+            "avg_episode_length": 192.5,
+            "avg_reward": -1.514999999999991,
+            "std_reward": 1.7860809052223743
+          },
+          {
+            "episode": 491.51999999999936,
+            "success_rate": 0.26666666666666666,
+            "avg_episode_length": 213.0,
+            "avg_reward": -1.7133333333333225,
+            "std_reward": 1.8434195278220118
+          },
+          {
+            "episode": 737.2800000000008,
+            "success_rate": 0.3,
+            "avg_episode_length": 205.5,
+            "avg_reward": -1.5816666666666557,
+            "std_reward": 1.928158159718455
+          },
+          {
+            "episode": 983.0400000000024,
+            "success_rate": 0.43333333333333335,
+            "avg_episode_length": 179.43333333333334,
+            "avg_reward": -1.084333333333324,
+            "std_reward": 2.0404602149732924
+          },
+          {
+            "episode": 1228.8000000000004,
+            "success_rate": 0.4666666666666667,
+            "avg_episode_length": 175.93333333333334,
+            "avg_reward": -0.9759999999999919,
+            "std_reward": 2.0408733424688483
+          },
+          {
+            "episode": 1474.559999999998,
+            "success_rate": 0.5,
+            "avg_episode_length": 138.43333333333334,
+            "avg_reward": -0.6043333333333273,
+            "std_reward": 1.985255119345839
+          },
+          {
+            "episode": 1720.3199999999954,
+            "success_rate": 0.6333333333333333,
+            "avg_episode_length": 136.36666666666667,
+            "avg_reward": -0.3569999999999948,
+            "std_reward": 1.8642445297403023
+          },
+          {
+            "episode": 1966.0799999999929,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 131.66666666666666,
+            "avg_reward": -0.33333333333332743,
+            "std_reward": 2.0190366239592734
+          },
+          {
+            "episode": 2211.8399999999956,
+            "success_rate": 0.7333333333333333,
+            "avg_episode_length": 108.76666666666667,
+            "avg_reward": 0.10566666666667131,
+            "std_reward": 1.8828571964496394
+          },
+          {
+            "episode": 2457.6000000000013,
+            "success_rate": 0.36666666666666664,
+            "avg_episode_length": 200.73333333333332,
+            "avg_reward": -1.380666666666659,
+            "std_reward": 1.8402263145843953
+          },
+          {
+            "episode": 2703.360000000007,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 143.76666666666668,
+            "avg_reward": -0.48433333333332723,
+            "std_reward": 2.0501116771748946
+          },
+          {
+            "episode": 2949.1200000000126,
+            "success_rate": 0.6333333333333333,
+            "avg_episode_length": 98.43333333333334,
+            "avg_reward": 0.03233333333333703,
+            "std_reward": 1.848351848419433
+          },
+          {
+            "episode": 3194.8800000000183,
+            "success_rate": 0.6666666666666666,
+            "avg_episode_length": 111.6,
+            "avg_reward": -0.042666666666661884,
+            "std_reward": 2.0195080809169497
+          },
+          {
+            "episode": 3440.640000000024,
+            "success_rate": 0.6666666666666666,
+            "avg_episode_length": 123.5,
+            "avg_reward": -0.11833333333332749,
+            "std_reward": 1.9689270908006877
+          },
+          {
+            "episode": 3686.4000000000296,
+            "success_rate": 0.5,
+            "avg_episode_length": 141.93333333333334,
+            "avg_reward": -0.6726666666666604,
+            "std_reward": 2.0860567798813294
+          },
+          {
+            "episode": 3932.1600000000353,
+            "success_rate": 0.6666666666666666,
+            "avg_episode_length": 96.53333333333333,
+            "avg_reward": 0.04133333333333749,
+            "std_reward": 1.9054688545225638
+          },
+          {
+            "episode": 4177.920000000041,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 138.4,
+            "avg_reward": -0.46399999999999425,
+            "std_reward": 1.9616465872662452
+          },
+          {
+            "episode": 4423.680000000047,
+            "success_rate": 0.43333333333333335,
+            "avg_episode_length": 146.73333333333332,
+            "avg_reward": -0.8373333333333258,
+            "std_reward": 2.0795783760710225
+          },
+          {
+            "episode": 4669.440000000052,
+            "success_rate": 0.6333333333333333,
+            "avg_episode_length": 88.0,
+            "avg_reward": 0.0500000000000037,
+            "std_reward": 1.8826718602383457
+          },
+          {
+            "episode": 4915.200000000058,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 128.06666666666666,
+            "avg_reward": -0.34066666666666134,
+            "std_reward": 2.0776588320083245
+          }
+        ],
+        "final": {
+          "success_rate": 0.52,
+          "avg_episode_length": 152.01,
+          "avg_reward": -0.6700999999999933,
+          "std_reward": 2.0548846658632622
+        }
+      }
+    },
+    "dynamic_obstacles": {
+      "augmented": {
+        "eval_history": [
+          {
+            "episode": 245.7599999999998,
+            "success_rate": 0.36666666666666664,
+            "avg_episode_length": 199.03333333333333,
+            "avg_reward": -1.6853333333333234,
+            "std_reward": 1.4212898680033086,
+            "strategy_entropy": 0.9956560500373111,
+            "strategy_distribution": {
+              "EXPLORE": 0.44297437615139845,
+              "APPROACH": 0.42153743091609447,
+              "EXPLOIT": 0.1354881929325071
+            }
+          },
+          {
+            "episode": 491.51999999999936,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 169.23333333333332,
+            "avg_reward": -1.1853333333333276,
+            "std_reward": 1.2722571368328808,
+            "strategy_entropy": 0.5632130868227851,
+            "strategy_distribution": {
+              "EXPLORE": 0.8154421902698444,
+              "APPROACH": 0.031908607445341734,
+              "EXPLOIT": 0.15264920228481388
+            }
+          },
+          {
+            "episode": 737.2800000000008,
+            "success_rate": 0.7333333333333333,
+            "avg_episode_length": 161.53333333333333,
+            "avg_reward": -0.8909999999999944,
+            "std_reward": 1.334909110514012,
+            "strategy_entropy": 0.7880427864896639,
+            "strategy_distribution": {
+              "EXPLORE": 0.4770945109368551,
+              "APPROACH": 0.4993809327280231,
+              "EXPLOIT": 0.02352455633512175
+            }
+          },
+          {
+            "episode": 983.0400000000024,
+            "success_rate": 0.9,
+            "avg_episode_length": 98.56666666666666,
+            "avg_reward": -0.10933333333333256,
+            "std_reward": 0.8362931437135047,
+            "strategy_entropy": 0.6202299120764481,
+            "strategy_distribution": {
+              "EXPLORE": 0.7987825498816368,
+              "APPROACH": 0.14609401420358473,
+              "EXPLOIT": 0.055123435914778494
+            }
+          },
+          {
+            "episode": 1228.8000000000004,
+            "success_rate": 0.8,
+            "avg_episode_length": 109.7,
+            "avg_reward": -0.35433333333333167,
+            "std_reward": 1.0427197876493697,
+            "strategy_entropy": 0.8599498658621523,
+            "strategy_distribution": {
+              "EXPLORE": 0.6055910057733211,
+              "APPROACH": 0.3211789729565482,
+              "EXPLOIT": 0.07323002127013066
+            }
+          },
+          {
+            "episode": 1474.559999999998,
+            "success_rate": 0.9333333333333333,
+            "avg_episode_length": 89.1,
+            "avg_reward": 0.01899999999999944,
+            "std_reward": 0.5120569629771025,
+            "strategy_entropy": 0.7447532934894799,
+            "strategy_distribution": {
+              "EXPLORE": 0.7025813692480359,
+              "APPROACH": 0.24653946876169097,
+              "EXPLOIT": 0.0508791619902731
+            }
+          },
+          {
+            "episode": 1720.3199999999954,
+            "success_rate": 0.9333333333333333,
+            "avg_episode_length": 89.73333333333333,
+            "avg_reward": 0.012666666666666982,
+            "std_reward": 0.6776032926589273,
+            "strategy_entropy": 0.8386057958845778,
+            "strategy_distribution": {
+              "EXPLORE": 0.5839524517087668,
+              "APPROACH": 0.362555720653789,
+              "EXPLOIT": 0.05349182763744428
+            }
+          },
+          {
+            "episode": 1966.0799999999929,
+            "success_rate": 0.7333333333333333,
+            "avg_episode_length": 84.83333333333333,
+            "avg_reward": -0.22199999999999895,
+            "std_reward": 0.9073529265579782,
+            "strategy_entropy": 0.9142131639186402,
+            "strategy_distribution": {
+              "EXPLORE": 0.5422396856581533,
+              "APPROACH": 0.3693516699410609,
+              "EXPLOIT": 0.08840864440078586
+            }
+          },
+          {
+            "episode": 2211.8399999999956,
+            "success_rate": 0.9333333333333333,
+            "avg_episode_length": 121.76666666666667,
+            "avg_reward": -0.29133333333333283,
+            "std_reward": 0.7900959154150533,
+            "strategy_entropy": 0.7795870062861154,
+            "strategy_distribution": {
+              "EXPLORE": 0.7224199288256228,
+              "APPROACH": 0.11689022721051191,
+              "EXPLOIT": 0.16068984396386532
+            }
+          },
+          {
+            "episode": 2457.6000000000013,
+            "success_rate": 0.8666666666666667,
+            "avg_episode_length": 70.33333333333333,
+            "avg_reward": 0.12300000000000107,
+            "std_reward": 0.9545929324411847,
+            "strategy_entropy": 0.8443243716154573,
+            "strategy_distribution": {
+              "EXPLORE": 0.6649289099526067,
+              "APPROACH": 0.23222748815165878,
+              "EXPLOIT": 0.10284360189573459
+            }
+          },
+          {
+            "episode": 2703.360000000007,
+            "success_rate": 0.9,
+            "avg_episode_length": 100.76666666666667,
+            "avg_reward": -0.13133333333333128,
+            "std_reward": 0.9496481219670503,
+            "strategy_entropy": 0.8445399325046172,
+            "strategy_distribution": {
+              "EXPLORE": 0.6814422758848826,
+              "APPROACH": 0.1773073106185908,
+              "EXPLOIT": 0.14125041349652662
+            }
+          },
+          {
+            "episode": 2949.1200000000126,
+            "success_rate": 0.9,
+            "avg_episode_length": 50.93333333333333,
+            "avg_reward": 0.3506666666666664,
+            "std_reward": 0.5707710184965209,
+            "strategy_entropy": 0.7599607184212944,
+            "strategy_distribution": {
+              "EXPLORE": 0.6740837696335078,
+              "APPROACH": 0.28206806282722513,
+              "EXPLOIT": 0.04384816753926701
+            }
+          },
+          {
+            "episode": 3194.8800000000183,
+            "success_rate": 0.7333333333333333,
+            "avg_episode_length": 102.93333333333334,
+            "avg_reward": -0.3703333333333313,
+            "std_reward": 1.0853124998000394,
+            "strategy_entropy": 0.7524193302114351,
+            "strategy_distribution": {
+              "EXPLORE": 0.7354274611398963,
+              "APPROACH": 0.16612694300518135,
+              "EXPLOIT": 0.09844559585492228
+            }
+          },
+          {
+            "episode": 3440.640000000024,
+            "success_rate": 0.6666666666666666,
+            "avg_episode_length": 87.0,
+            "avg_reward": -0.32733333333333164,
+            "std_reward": 1.0260732050990382,
+            "strategy_entropy": 0.5745807906174485,
+            "strategy_distribution": {
+              "EXPLORE": 0.8237547892720306,
+              "APPROACH": 0.12183908045977011,
+              "EXPLOIT": 0.05440613026819923
+            }
+          },
+          {
+            "episode": 3686.4000000000296,
+            "success_rate": 0.8,
+            "avg_episode_length": 91.03333333333333,
+            "avg_reward": -0.15133333333333138,
+            "std_reward": 1.1434501398059342,
+            "strategy_entropy": 0.3831817345273132,
+            "strategy_distribution": {
+              "EXPLORE": 0.9029659465397291,
+              "APPROACH": 0.05968509703405346,
+              "EXPLOIT": 0.0373489564262175
+            }
+          },
+          {
+            "episode": 3932.1600000000353,
+            "success_rate": 0.7666666666666667,
+            "avg_episode_length": 104.63333333333334,
+            "avg_reward": -0.3209999999999976,
+            "std_reward": 1.1940501106179138,
+            "strategy_entropy": 0.6920628671271447,
+            "strategy_distribution": {
+              "EXPLORE": 0.7693532972284167,
+              "APPROACH": 0.08537750876075183,
+              "EXPLOIT": 0.14526919401083146
+            }
+          },
+          {
+            "episode": 4177.920000000041,
+            "success_rate": 0.7333333333333333,
+            "avg_episode_length": 73.06666666666666,
+            "avg_reward": -0.07166666666666484,
+            "std_reward": 1.124289652279256,
+            "strategy_entropy": 0.8444300758007145,
+            "strategy_distribution": {
+              "EXPLORE": 0.5821167883211679,
+              "APPROACH": 0.36177007299270075,
+              "EXPLOIT": 0.05611313868613139
+            }
+          },
+          {
+            "episode": 4423.680000000047,
+            "success_rate": 0.9,
+            "avg_episode_length": 66.3,
+            "avg_reward": 0.21333333333333396,
+            "std_reward": 0.8041158015001428,
+            "strategy_entropy": 0.7012396378009611,
+            "strategy_distribution": {
+              "EXPLORE": 0.6792357968828557,
+              "APPROACH": 0.3011563599798894,
+              "EXPLOIT": 0.0196078431372549
+            }
+          },
+          {
+            "episode": 4669.440000000052,
+            "success_rate": 0.7,
+            "avg_episode_length": 115.06666666666666,
+            "avg_reward": -0.5253333333333295,
+            "std_reward": 1.2779586152228117,
+            "strategy_entropy": 0.6579949316553817,
+            "strategy_distribution": {
+              "EXPLORE": 0.7833140208574739,
+              "APPROACH": 0.14803012746234068,
+              "EXPLOIT": 0.0686558516801854
+            }
+          },
+          {
+            "episode": 4915.200000000058,
+            "success_rate": 0.7,
+            "avg_episode_length": 86.1,
+            "avg_reward": -0.23566666666666375,
+            "std_reward": 1.2636895276222742,
+            "strategy_entropy": 0.9338268459182442,
+            "strategy_distribution": {
+              "EXPLORE": 0.5876887340301974,
+              "APPROACH": 0.28339140534262486,
+              "EXPLOIT": 0.1289198606271777
+            }
+          }
+        ],
+        "final": {
+          "success_rate": 0.86,
+          "avg_episode_length": 54.37,
+          "avg_reward": 0.2759000000000009,
+          "std_reward": 0.8536054064964641,
+          "strategy_entropy": 0.6457590962097665,
+          "strategy_distribution": {
+            "EXPLORE": 0.769542026853044,
+            "APPROACH": 0.19073018208570902,
+            "EXPLOIT": 0.03972779106124701
+          }
+        }
+      },
+      "baseline": {
+        "eval_history": [
+          {
+            "episode": 245.7599999999998,
+            "success_rate": 0.23333333333333334,
+            "avg_episode_length": 268.56666666666666,
+            "avg_reward": -2.466333333333318,
+            "std_reward": 0.9497700891385286
+          },
+          {
+            "episode": 491.51999999999936,
+            "success_rate": 0.3333333333333333,
+            "avg_episode_length": 244.73333333333332,
+            "avg_reward": -2.110666666666653,
+            "std_reward": 1.307190201241655
+          },
+          {
+            "episode": 737.2800000000008,
+            "success_rate": 0.2,
+            "avg_episode_length": 256.23333333333335,
+            "avg_reward": -2.392999999999985,
+            "std_reward": 1.2464727567553626
+          },
+          {
+            "episode": 983.0400000000024,
+            "success_rate": 0.6,
+            "avg_episode_length": 183.73333333333332,
+            "avg_reward": -1.2639999999999925,
+            "std_reward": 1.3861904631038173
+          },
+          {
+            "episode": 1228.8000000000004,
+            "success_rate": 0.3333333333333333,
+            "avg_episode_length": 234.1,
+            "avg_reward": -2.053333333333321,
+            "std_reward": 1.3912232826624915
+          },
+          {
+            "episode": 1474.559999999998,
+            "success_rate": 0.4666666666666667,
+            "avg_episode_length": 207.63333333333333,
+            "avg_reward": -1.621333333333323,
+            "std_reward": 1.4521518133063296
+          },
+          {
+            "episode": 1720.3199999999954,
+            "success_rate": 0.4666666666666667,
+            "avg_episode_length": 196.66666666666666,
+            "avg_reward": -1.5443333333333242,
+            "std_reward": 1.4149008995528733
+          },
+          {
+            "episode": 1966.0799999999929,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 200.6,
+            "avg_reward": -1.4336666666666573,
+            "std_reward": 1.4478777189006196
+          },
+          {
+            "episode": 2211.8399999999956,
+            "success_rate": 0.7333333333333333,
+            "avg_episode_length": 178.9,
+            "avg_reward": -1.0646666666666602,
+            "std_reward": 1.2660956607706229
+          },
+          {
+            "episode": 2457.6000000000013,
+            "success_rate": 0.43333333333333335,
+            "avg_episode_length": 200.16666666666666,
+            "avg_reward": -1.5966666666666562,
+            "std_reward": 1.5258054339338922
+          },
+          {
+            "episode": 2703.360000000007,
+            "success_rate": 0.8,
+            "avg_episode_length": 163.7,
+            "avg_reward": -0.8289999999999943,
+            "std_reward": 1.3115038441931126
+          },
+          {
+            "episode": 2949.1200000000126,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 188.73333333333332,
+            "avg_reward": -1.363999999999992,
+            "std_reward": 1.4044182662820368
+          },
+          {
+            "episode": 3194.8800000000183,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 185.86666666666667,
+            "avg_reward": -1.3353333333333246,
+            "std_reward": 1.530071312789765
+          },
+          {
+            "episode": 3440.640000000024,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 182.8,
+            "avg_reward": -1.2883333333333256,
+            "std_reward": 1.4935351426137236
+          },
+          {
+            "episode": 3686.4000000000296,
+            "success_rate": 0.6,
+            "avg_episode_length": 174.3,
+            "avg_reward": -1.1859999999999935,
+            "std_reward": 1.3280928682387552
+          },
+          {
+            "episode": 3932.1600000000353,
+            "success_rate": 0.7333333333333333,
+            "avg_episode_length": 157.9,
+            "avg_reward": -0.8546666666666616,
+            "std_reward": 1.3409144475154013
+          },
+          {
+            "episode": 4177.920000000041,
+            "success_rate": 0.7,
+            "avg_episode_length": 162.56666666666666,
+            "avg_reward": -0.934999999999994,
+            "std_reward": 1.3866764823370459
+          },
+          {
+            "episode": 4423.680000000047,
+            "success_rate": 0.4,
+            "avg_episode_length": 215.5,
+            "avg_reward": -1.799999999999989,
+            "std_reward": 1.3326790061126157
+          },
+          {
+            "episode": 4669.440000000052,
+            "success_rate": 0.4666666666666667,
+            "avg_episode_length": 201.06666666666666,
+            "avg_reward": -1.571999999999991,
+            "std_reward": 1.4426581946762855
+          },
+          {
+            "episode": 4915.200000000058,
+            "success_rate": 0.5666666666666667,
+            "avg_episode_length": 181.83333333333334,
+            "avg_reward": -1.294999999999993,
+            "std_reward": 1.3081405378118371
+          }
+        ],
+        "final": {
+          "success_rate": 0.42,
+          "avg_episode_length": 223.39,
+          "avg_reward": -1.8439999999999888,
+          "std_reward": 1.3270734719675383
+        }
+      }
+    },
+    "visual_search": {
+      "augmented": {
+        "eval_history": [
+          {
+            "episode": 245.7599999999998,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 262.8666666666667,
+            "avg_reward": -2.4939999999999833,
+            "std_reward": 1.29276344832816,
+            "strategy_entropy": 0.9892255226205846,
+            "strategy_distribution": {
+              "EXPLORE": 0.5524980978950038,
+              "APPROACH": 0.2674359624651281,
+              "EXPLOIT": 0.1800659396398681
+            }
+          },
+          {
+            "episode": 491.51999999999936,
+            "success_rate": 0.1,
+            "avg_episode_length": 270.7,
+            "avg_reward": -2.6059999999999826,
+            "std_reward": 1.1820084602066034,
+            "strategy_entropy": 0.4942469696820915,
+            "strategy_distribution": {
+              "EXPLORE": 0.8630710503632557,
+              "APPROACH": 0.069449575175471,
+              "EXPLOIT": 0.06747937446127324
+            }
+          },
+          {
+            "episode": 737.2800000000008,
+            "success_rate": 0.06666666666666667,
+            "avg_episode_length": 282.2,
+            "avg_reward": -2.7546666666666493,
+            "std_reward": 0.9205966664192377,
+            "strategy_entropy": 0.9196484574062698,
+            "strategy_distribution": {
+              "EXPLORE": 0.49066855657925823,
+              "APPROACH": 0.4261752893928656,
+              "EXPLOIT": 0.08315615402787621
+            }
+          },
+          {
+            "episode": 983.0400000000024,
+            "success_rate": 0.1,
+            "avg_episode_length": 276.1333333333333,
+            "avg_reward": -2.6603333333333157,
+            "std_reward": 1.0445397178768312,
+            "strategy_entropy": 0.949574021493345,
+            "strategy_distribution": {
+              "EXPLORE": 0.5997102848865282,
+              "APPROACH": 0.1859005311443747,
+              "EXPLOIT": 0.21438918396909706
+            }
+          },
+          {
+            "episode": 1228.8000000000004,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 265.53333333333336,
+            "avg_reward": -2.5206666666666497,
+            "std_reward": 1.2261890374471383,
+            "strategy_entropy": 0.9540874935178976,
+            "strategy_distribution": {
+              "EXPLORE": 0.45556113482299776,
+              "APPROACH": 0.44087371328144614,
+              "EXPLOIT": 0.10356515189555611
+            }
+          },
+          {
+            "episode": 1474.559999999998,
+            "success_rate": 0.1,
+            "avg_episode_length": 273.1666666666667,
+            "avg_reward": -2.630666666666649,
+            "std_reward": 1.1115602647729943,
+            "strategy_entropy": 0.6706433951769941,
+            "strategy_distribution": {
+              "EXPLORE": 0.772666259914582,
+              "APPROACH": 0.1638804148871263,
+              "EXPLOIT": 0.06345332519829164
+            }
+          },
+          {
+            "episode": 1720.3199999999954,
+            "success_rate": 0.16666666666666666,
+            "avg_episode_length": 255.5,
+            "avg_reward": -2.3866666666666503,
+            "std_reward": 1.3797809810094992,
+            "strategy_entropy": 0.9017834340236593,
+            "strategy_distribution": {
+              "EXPLORE": 0.4528375733855186,
+              "APPROACH": 0.475146771037182,
+              "EXPLOIT": 0.07201565557729941
+            }
+          },
+          {
+            "episode": 1966.0799999999929,
+            "success_rate": 0.06666666666666667,
+            "avg_episode_length": 281.26666666666665,
+            "avg_reward": -2.7453333333333156,
+            "std_reward": 0.953099271966049,
+            "strategy_entropy": 0.9414635565377799,
+            "strategy_distribution": {
+              "EXPLORE": 0.5929130125622185,
+              "APPROACH": 0.2610808248400095,
+              "EXPLOIT": 0.146006162597772
+            }
+          },
+          {
+            "episode": 2211.8399999999956,
+            "success_rate": 0.2,
+            "avg_episode_length": 241.96666666666667,
+            "avg_reward": -2.2176666666666507,
+            "std_reward": 1.5647676788868254,
+            "strategy_entropy": 0.7570397979808184,
+            "strategy_distribution": {
+              "EXPLORE": 0.7374293979887037,
+              "APPROACH": 0.1407907425265188,
+              "EXPLOIT": 0.12177985948477751
+            }
+          },
+          {
+            "episode": 2457.6000000000013,
+            "success_rate": 0.2,
+            "avg_episode_length": 246.5,
+            "avg_reward": -2.2629999999999844,
+            "std_reward": 1.4818865228709799,
+            "strategy_entropy": 0.9662068767080785,
+            "strategy_distribution": {
+              "EXPLORE": 0.5167004732927654,
+              "APPROACH": 0.3607843137254902,
+              "EXPLOIT": 0.12251521298174442
+            }
+          },
+          {
+            "episode": 2703.360000000007,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 268.03333333333336,
+            "avg_reward": -2.54566666666665,
+            "std_reward": 1.1957359890693011,
+            "strategy_entropy": 0.36793473196919535,
+            "strategy_distribution": {
+              "EXPLORE": 0.879492600422833,
+              "APPROACH": 0.12050739957716702,
+              "EXPLOIT": 0.0
+            }
+          },
+          {
+            "episode": 2949.1200000000126,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 261.8,
+            "avg_reward": -2.483333333333316,
+            "std_reward": 1.3174149772270711,
+            "strategy_entropy": 0.7488225945216117,
+            "strategy_distribution": {
+              "EXPLORE": 0.6256684491978609,
+              "APPROACH": 0.3509039979628215,
+              "EXPLOIT": 0.023427552839317547
+            }
+          },
+          {
+            "episode": 3194.8800000000183,
+            "success_rate": 0.03333333333333333,
+            "avg_episode_length": 291.8,
+            "avg_reward": -2.8843333333333154,
+            "std_reward": 0.6228840626918875,
+            "strategy_entropy": 0.8926762175986969,
+            "strategy_distribution": {
+              "EXPLORE": 0.630568882796436,
+              "APPROACH": 0.24788668037468586,
+              "EXPLOIT": 0.12154443682887822
+            }
+          },
+          {
+            "episode": 3440.640000000024,
+            "success_rate": 0.26666666666666666,
+            "avg_episode_length": 223.86666666666667,
+            "avg_reward": -1.9693333333333185,
+            "std_reward": 1.709411074675191,
+            "strategy_entropy": 0.8957236892839352,
+            "strategy_distribution": {
+              "EXPLORE": 0.6207564026206075,
+              "APPROACH": 0.11420488385944014,
+              "EXPLOIT": 0.26503871351995234
+            }
+          },
+          {
+            "episode": 3686.4000000000296,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 261.6,
+            "avg_reward": -2.4813333333333167,
+            "std_reward": 1.3223784968339705,
+            "strategy_entropy": 0.9902750317182005,
+            "strategy_distribution": {
+              "EXPLORE": 0.5040774719673802,
+              "APPROACH": 0.35372069317023447,
+              "EXPLOIT": 0.14220183486238533
+            }
+          },
+          {
+            "episode": 3932.1600000000353,
+            "success_rate": 0.2,
+            "avg_episode_length": 243.13333333333333,
+            "avg_reward": -2.229333333333317,
+            "std_reward": 1.5416418376378898,
+            "strategy_entropy": 0.7159665357107339,
+            "strategy_distribution": {
+              "EXPLORE": 0.7384151357279957,
+              "APPROACH": 0.20126131066630107,
+              "EXPLOIT": 0.060323553605703316
+            }
+          },
+          {
+            "episode": 4177.920000000041,
+            "success_rate": 0.36666666666666664,
+            "avg_episode_length": 197.96666666666667,
+            "avg_reward": -1.6093333333333204,
+            "std_reward": 1.8308921929546227,
+            "strategy_entropy": 0.9393208110928669,
+            "strategy_distribution": {
+              "EXPLORE": 0.6096986024583263,
+              "APPROACH": 0.1995285401582758,
+              "EXPLOIT": 0.1907728573833979
+            }
+          },
+          {
+            "episode": 4423.680000000047,
+            "success_rate": 0.3,
+            "avg_episode_length": 223.23333333333332,
+            "avg_reward": -1.9293333333333194,
+            "std_reward": 1.6642895047303294,
+            "strategy_entropy": 0.7836909251619223,
+            "strategy_distribution": {
+              "EXPLORE": 0.6823951022846051,
+              "APPROACH": 0.2542929670001493,
+              "EXPLOIT": 0.06331193071524563
+            }
+          },
+          {
+            "episode": 4669.440000000052,
+            "success_rate": 0.26666666666666666,
+            "avg_episode_length": 224.4,
+            "avg_reward": -1.9746666666666521,
+            "std_reward": 1.701277428548577,
+            "strategy_entropy": 0.8336276734044952,
+            "strategy_distribution": {
+              "EXPLORE": 0.6647355912061794,
+              "APPROACH": 0.244503862150921,
+              "EXPLOIT": 0.09076054664289958
+            }
+          },
+          {
+            "episode": 4915.200000000058,
+            "success_rate": 0.2,
+            "avg_episode_length": 243.43333333333334,
+            "avg_reward": -2.232333333333317,
+            "std_reward": 1.5355730381702883,
+            "strategy_entropy": 0.9907809632991864,
+            "strategy_distribution": {
+              "EXPLORE": 0.5560728467752978,
+              "APPROACH": 0.1930713405449815,
+              "EXPLOIT": 0.2508558126797207
+            }
+          }
+        ],
+        "final": {
+          "success_rate": 0.18,
+          "avg_episode_length": 251.83,
+          "avg_reward": -2.336499999999983,
+          "std_reward": 1.430660249674946,
+          "strategy_entropy": 0.8282980025516125,
+          "strategy_distribution": {
+            "EXPLORE": 0.682047412937299,
+            "APPROACH": 0.21109478616527022,
+            "EXPLOIT": 0.10685780089743081
+          }
+        }
+      },
+      "baseline": {
+        "eval_history": [
+          {
+            "episode": 245.7599999999998,
+            "success_rate": 0.03333333333333333,
+            "avg_episode_length": 290.3666666666667,
+            "avg_reward": -2.869999999999982,
+            "std_reward": 0.700071424927482
+          },
+          {
+            "episode": 491.51999999999936,
+            "success_rate": 0.06666666666666667,
+            "avg_episode_length": 280.56666666666666,
+            "avg_reward": -2.7383333333333155,
+            "std_reward": 0.9790746765299428
+          },
+          {
+            "episode": 737.2800000000008,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 261.06666666666666,
+            "avg_reward": -2.475999999999983,
+            "std_reward": 1.335960578260694
+          },
+          {
+            "episode": 983.0400000000024,
+            "success_rate": 0.1,
+            "avg_episode_length": 271.23333333333335,
+            "avg_reward": -2.6113333333333157,
+            "std_reward": 1.1660038116956888
+          },
+          {
+            "episode": 1228.8000000000004,
+            "success_rate": 0.1,
+            "avg_episode_length": 271.26666666666665,
+            "avg_reward": -2.61166666666665,
+            "std_reward": 1.16501812098448
+          },
+          {
+            "episode": 1474.559999999998,
+            "success_rate": 0.1,
+            "avg_episode_length": 271.1,
+            "avg_reward": -2.609999999999983,
+            "std_reward": 1.1700455831576189
+          },
+          {
+            "episode": 1720.3199999999954,
+            "success_rate": 0.16666666666666666,
+            "avg_episode_length": 251.8,
+            "avg_reward": -2.3496666666666504,
+            "std_reward": 1.4542431785028942
+          },
+          {
+            "episode": 1966.0799999999929,
+            "success_rate": 0.1,
+            "avg_episode_length": 271.3,
+            "avg_reward": -2.6119999999999823,
+            "std_reward": 1.164002863684902
+          },
+          {
+            "episode": 2211.8399999999956,
+            "success_rate": 0.03333333333333333,
+            "avg_episode_length": 290.3,
+            "avg_reward": -2.869333333333315,
+            "std_reward": 0.7036615347989051
+          },
+          {
+            "episode": 2457.6000000000013,
+            "success_rate": 0.2,
+            "avg_episode_length": 241.83333333333334,
+            "avg_reward": -2.216333333333317,
+            "std_reward": 1.5673852607305998
+          },
+          {
+            "episode": 2703.360000000007,
+            "success_rate": 0.03333333333333333,
+            "avg_episode_length": 290.1666666666667,
+            "avg_reward": -2.8679999999999817,
+            "std_reward": 0.710841754541751
+          },
+          {
+            "episode": 2949.1200000000126,
+            "success_rate": 0.1,
+            "avg_episode_length": 270.93333333333334,
+            "avg_reward": -2.608333333333316,
+            "std_reward": 1.1750406612349813
+          },
+          {
+            "episode": 3194.8800000000183,
+            "success_rate": 0.03333333333333333,
+            "avg_episode_length": 290.43333333333334,
+            "avg_reward": -2.8706666666666485,
+            "std_reward": 0.696481315056059
+          },
+          {
+            "episode": 3440.640000000024,
+            "success_rate": 0.06666666666666667,
+            "avg_episode_length": 280.7,
+            "avg_reward": -2.739666666666649,
+            "std_reward": 0.9741474335141538
+          },
+          {
+            "episode": 3686.4000000000296,
+            "success_rate": 0.16666666666666666,
+            "avg_episode_length": 251.56666666666666,
+            "avg_reward": -2.347333333333317,
+            "std_reward": 1.4594358118426678
+          },
+          {
+            "episode": 3932.1600000000353,
+            "success_rate": 0.06666666666666667,
+            "avg_episode_length": 280.56666666666666,
+            "avg_reward": -2.7383333333333155,
+            "std_reward": 0.9790678673559248
+          },
+          {
+            "episode": 4177.920000000041,
+            "success_rate": 0.03333333333333333,
+            "avg_episode_length": 290.53333333333336,
+            "avg_reward": -2.8716666666666484,
+            "std_reward": 0.6910961502489246
+          },
+          {
+            "episode": 4423.680000000047,
+            "success_rate": 0.1,
+            "avg_episode_length": 271.1,
+            "avg_reward": -2.609999999999983,
+            "std_reward": 1.1700598275301934
+          },
+          {
+            "episode": 4669.440000000052,
+            "success_rate": 0.16666666666666666,
+            "avg_episode_length": 251.66666666666666,
+            "avg_reward": -2.3483333333333167,
+            "std_reward": 1.4572007030223624
+          },
+          {
+            "episode": 4915.200000000058,
+            "success_rate": 0.13333333333333333,
+            "avg_episode_length": 261.23333333333335,
+            "avg_reward": -2.47766666666665,
+            "std_reward": 1.3317198988108838
+          }
+        ],
+        "final": {
+          "success_rate": 0.13,
+          "avg_episode_length": 262.08,
+          "avg_reward": -2.489499999999982,
+          "std_reward": 1.3206645107672053
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,273 @@
+Device: cpu
+
+🔬 FULL EXPERIMENT — All tasks, both models
+
+============================================================
+MODEL PARAMETER COMPARISON
+============================================================
+  Augmented (PFC) model: 231,050 parameters
+  Baseline (Fixed) model: 231,590 parameters
+  Ratio: 1.00x
+  Difference: 540 params
+============================================================
+  Estimated VRAM (model + optimizer):
+    Augmented: ~2.6 MB
+    Baseline:  ~2.7 MB
+    Combined:  ~5.3 MB
+============================================================
+
+======================================================================
+PHASE 1: TRAINING
+======================================================================
+
+  Interleaved training from scratch (shared optimizer, meta_mode=learned)...
+  . rollout 0 (morr) collect=0.53s update=1.64s elapsed=0.0m
+  . rollout 20 (morr) collect=0.54s update=1.64s elapsed=0.8m
+  . rollout 40 (morr) collect=0.64s update=1.92s elapsed=1.5m
+  . rollout 60 (morr) collect=0.58s update=1.67s elapsed=2.3m
+  . rollout 80 (morr) collect=0.66s update=1.93s elapsed=3.2m
+  . rollout 100 (morr) collect=0.56s update=1.77s elapsed=4.0m
+  . rollout 120 (morr) collect=0.64s update=1.69s elapsed=4.8m
+  . rollout 140 (morr) collect=0.70s update=1.75s elapsed=5.6m
+  [interleaved] total_eps≈990 | morr=0.13 | visu=0.20 | dyna=0.30 | visu=0.10 | above25=1 | score=2.73 | obj_ent=0.884 | 2.8 ep/s
+  . rollout 160 (morr) collect=0.69s update=1.81s elapsed=6.6m
+  . rollout 180 (morr) collect=0.83s update=1.74s elapsed=7.4m
+  . rollout 200 (morr) collect=0.62s update=1.63s elapsed=8.2m
+  . rollout 220 (morr) collect=0.63s update=1.70s elapsed=9.0m
+  . rollout 240 (morr) collect=0.68s update=1.63s elapsed=9.8m
+  . rollout 260 (morr) collect=0.55s update=1.42s elapsed=10.5m
+  . rollout 280 (morr) collect=0.60s update=1.89s elapsed=11.1m
+  [interleaved] total_eps≈1973 | morr=0.20 | visu=0.40 | dyna=0.43 | visu=0.00 | above25=2 | score=5.03 | obj_ent=0.838 | 2.8 ep/s
+  . rollout 300 (morr) collect=0.55s update=1.45s elapsed=12.1m
+  . rollout 320 (morr) collect=0.49s update=1.90s elapsed=12.7m
+  . rollout 340 (morr) collect=0.55s update=1.51s elapsed=13.4m
+  . rollout 360 (morr) collect=0.51s update=1.39s elapsed=14.1m
+  . rollout 380 (morr) collect=0.51s update=1.42s elapsed=14.8m
+  . rollout 400 (morr) collect=0.56s update=1.50s elapsed=15.5m
+  . rollout 420 (morr) collect=0.54s update=1.45s elapsed=16.1m
+  [interleaved] total_eps≈2956 | morr=0.37 | visu=0.63 | dyna=0.43 | visu=0.10 | above25=3 | score=7.53 | obj_ent=0.896 | 2.9 ep/s
+  . rollout 440 (morr) collect=0.55s update=1.84s elapsed=17.0m
+  . rollout 460 (morr) collect=0.51s update=1.47s elapsed=17.7m
+  . rollout 480 (morr) collect=0.71s update=1.54s elapsed=18.4m
+  . rollout 500 (morr) collect=0.57s update=1.47s elapsed=19.1m
+  . rollout 520 (morr) collect=0.53s update=1.54s elapsed=19.8m
+  . rollout 540 (morr) collect=0.54s update=1.41s elapsed=20.5m
+  . rollout 560 (morr) collect=0.54s update=1.39s elapsed=21.2m
+  [interleaved] total_eps≈3939 | morr=0.43 | visu=0.47 | dyna=0.60 | visu=0.10 | above25=3 | score=7.60 | obj_ent=0.937 | 3.0 ep/s
+  . rollout 580 (morr) collect=0.53s update=1.51s elapsed=21.9m
+  . rollout 600 (morr) collect=0.55s update=1.47s elapsed=22.7m
+  . rollout 620 (morr) collect=0.56s update=1.50s elapsed=23.3m
+  . rollout 640 (morr) collect=0.53s update=1.79s elapsed=24.0m
+  . rollout 660 (morr) collect=0.57s update=1.52s elapsed=24.7m
+  . rollout 680 (morr) collect=0.49s update=1.39s elapsed=25.4m
+  . rollout 700 (morr) collect=0.52s update=1.42s elapsed=26.2m
+  . rollout 720 (morr) collect=0.55s update=1.60s elapsed=26.8m
+  [interleaved] total_eps≈4922 | morr=0.37 | visu=0.50 | dyna=0.87 | visu=0.17 | above25=3 | score=7.90 | obj_ent=0.925 | 3.0 ep/s
+  . rollout 740 (morr) collect=0.49s update=1.35s elapsed=27.6m
+  . rollout 760 (morr) collect=0.49s update=1.36s elapsed=28.2m
+  . rollout 780 (morr) collect=0.47s update=1.35s elapsed=28.9m
+  . rollout 800 (morr) collect=0.49s update=1.34s elapsed=29.5m
+  . rollout 820 (morr) collect=0.49s update=1.34s elapsed=30.1m
+  . rollout 840 (morr) collect=0.48s update=1.34s elapsed=30.7m
+  . rollout 860 (morr) collect=0.48s update=1.36s elapsed=31.3m
+  [interleaved] total_eps≈5905 | morr=0.60 | visu=0.47 | dyna=0.90 | visu=0.10 | above25=3 | score=8.07 | obj_ent=0.842 | 3.1 ep/s
+  . rollout 880 (morr) collect=0.47s update=1.36s elapsed=32.1m
+  . rollout 900 (morr) collect=0.47s update=1.34s elapsed=32.7m
+  . rollout 920 (morr) collect=0.49s update=1.36s elapsed=33.3m
+  . rollout 940 (morr) collect=0.50s update=1.35s elapsed=33.9m
+  . rollout 960 (morr) collect=0.52s update=1.35s elapsed=34.6m
+  . rollout 980 (morr) collect=0.56s update=1.42s elapsed=35.2m
+  . rollout 1000 (morr) collect=0.49s update=1.34s elapsed=35.8m
+  [interleaved] total_eps≈6888 | morr=0.30 | visu=0.60 | dyna=0.90 | visu=0.17 | above25=3 | score=7.97 | obj_ent=0.887 | 3.2 ep/s
+  . rollout 1020 (morr) collect=0.47s update=1.35s elapsed=36.6m
+  . rollout 1040 (morr) collect=0.45s update=1.35s elapsed=37.2m
+  . rollout 1060 (morr) collect=0.45s update=1.35s elapsed=37.8m
+  . rollout 1080 (morr) collect=0.56s update=1.42s elapsed=38.4m
+  . rollout 1100 (morr) collect=0.46s update=1.36s elapsed=39.1m
+  . rollout 1120 (morr) collect=0.44s update=1.37s elapsed=39.7m
+  . rollout 1140 (morr) collect=0.45s update=1.35s elapsed=40.3m
+  [interleaved] total_eps≈7871 | morr=0.50 | visu=0.60 | dyna=0.97 | visu=0.20 | above25=3 | score=8.27 | obj_ent=0.827 | 3.2 ep/s
+  . rollout 1160 (morr) collect=0.51s update=1.33s elapsed=41.0m
+  . rollout 1180 (morr) collect=0.49s update=1.35s elapsed=41.7m
+  . rollout 1200 (morr) collect=0.46s update=1.36s elapsed=42.3m
+  . rollout 1220 (morr) collect=0.45s update=1.36s elapsed=42.9m
+  . rollout 1240 (morr) collect=0.55s update=1.42s elapsed=43.6m
+  . rollout 1260 (morr) collect=0.49s update=1.33s elapsed=44.2m
+  . rollout 1280 (morr) collect=0.54s update=1.63s elapsed=44.9m
+  [interleaved] total_eps≈8854 | morr=0.20 | visu=0.73 | dyna=0.83 | visu=0.30 | above25=3 | score=8.07 | obj_ent=0.838 | 3.2 ep/s
+  . rollout 1300 (morr) collect=0.67s update=1.69s elapsed=45.9m
+  . rollout 1320 (morr) collect=0.74s update=2.17s elapsed=46.6m
+  . rollout 1340 (morr) collect=0.60s update=1.75s elapsed=47.4m
+  . rollout 1360 (morr) collect=0.58s update=1.71s elapsed=48.2m
+  . rollout 1380 (morr) collect=0.65s update=1.78s elapsed=49.1m
+  . rollout 1400 (morr) collect=0.77s update=2.02s elapsed=50.0m
+  . rollout 1420 (morr) collect=0.72s update=1.99s elapsed=50.9m
+  . rollout 1440 (morr) collect=0.80s update=2.18s elapsed=51.9m
+  [interleaved] total_eps≈9837 | morr=0.40 | visu=0.53 | dyna=0.73 | visu=0.07 | above25=3 | score=7.73 | obj_ent=0.854 | 3.1 ep/s
+  . rollout 1460 (morr) collect=0.68s update=1.78s elapsed=53.0m
+  . rollout 1480 (morr) collect=0.75s update=1.95s elapsed=53.8m
+  . rollout 1500 (morr) collect=0.99s update=2.42s elapsed=54.9m
+  . rollout 1520 (morr) collect=0.69s update=1.86s elapsed=55.9m
+  . rollout 1540 (morr) collect=0.63s update=1.71s elapsed=56.7m
+  . rollout 1560 (morr) collect=0.61s update=1.62s elapsed=57.4m
+  . rollout 1580 (morr) collect=0.58s update=1.52s elapsed=58.3m
+  [interleaved] total_eps≈10820 | morr=0.33 | visu=0.70 | dyna=0.97 | visu=0.17 | above25=3 | score=8.17 | obj_ent=0.881 | 3.1 ep/s
+  . rollout 1600 (morr) collect=0.62s update=1.71s elapsed=59.2m
+  . rollout 1620 (morr) collect=0.63s update=1.55s elapsed=60.0m
+  . rollout 1640 (morr) collect=0.60s update=1.65s elapsed=60.7m
+  . rollout 1660 (morr) collect=0.67s update=1.89s elapsed=61.7m
+  . rollout 1680 (morr) collect=0.73s update=1.61s elapsed=62.4m
+  . rollout 1700 (morr) collect=0.60s update=1.65s elapsed=63.1m
+  . rollout 1720 (morr) collect=0.54s update=1.51s elapsed=63.8m
+  [interleaved] total_eps≈11803 | morr=0.37 | visu=0.80 | dyna=0.97 | visu=0.17 | above25=3 | score=8.30 | obj_ent=0.965 | 3.1 ep/s
+  . rollout 1740 (morr) collect=0.50s update=1.44s elapsed=64.7m
+  . rollout 1760 (morr) collect=0.55s update=1.41s elapsed=65.4m
+  . rollout 1780 (morr) collect=0.59s update=1.72s elapsed=66.1m
+  . rollout 1800 (morr) collect=0.51s update=1.46s elapsed=66.8m
+  . rollout 1820 (morr) collect=0.50s update=1.50s elapsed=67.5m
+  . rollout 1840 (morr) collect=0.56s update=1.59s elapsed=68.3m
+  . rollout 1860 (morr) collect=0.54s update=1.56s elapsed=69.0m
+  [interleaved] total_eps≈12786 | morr=0.43 | visu=0.63 | dyna=0.87 | visu=0.10 | above25=3 | score=8.03 | obj_ent=0.911 | 3.1 ep/s
+  . rollout 1880 (morr) collect=0.53s update=1.55s elapsed=69.8m
+  . rollout 1900 (morr) collect=0.56s update=1.49s elapsed=70.5m
+  . rollout 1920 (morr) collect=0.52s update=1.42s elapsed=71.2m
+  . rollout 1940 (morr) collect=0.54s update=1.52s elapsed=71.9m
+  . rollout 1960 (morr) collect=0.51s update=1.52s elapsed=72.6m
+  . rollout 1980 (morr) collect=0.52s update=1.53s elapsed=73.3m
+  . rollout 2000 (morr) collect=0.57s update=1.57s elapsed=74.1m
+  [interleaved] total_eps≈13769 | morr=0.37 | visu=0.73 | dyna=0.83 | visu=0.23 | above25=3 | score=8.17 | obj_ent=0.851 | 3.1 ep/s
+  . rollout 2020 (morr) collect=0.49s update=1.51s elapsed=74.9m
+  . rollout 2040 (morr) collect=0.60s update=1.59s elapsed=75.6m
+  . rollout 2060 (morr) collect=0.58s update=1.60s elapsed=76.4m
+  . rollout 2080 (morr) collect=0.60s update=1.61s elapsed=77.1m
+  . rollout 2100 (morr) collect=0.62s update=1.59s elapsed=77.9m
+  . rollout 2120 (morr) collect=0.59s update=1.58s elapsed=78.6m
+  . rollout 2140 (morr) collect=0.55s update=1.59s elapsed=79.4m
+  . rollout 2160 (morr) collect=0.58s update=1.60s elapsed=80.1m
+  [interleaved] total_eps≈14752 | morr=0.37 | visu=0.73 | dyna=0.97 | visu=0.17 | above25=3 | score=8.23 | obj_ent=0.911 | 3.1 ep/s
+  . rollout 2180 (morr) collect=0.61s update=1.61s elapsed=81.0m
+  . rollout 2200 (morr) collect=0.58s update=1.60s elapsed=81.7m
+  . rollout 2220 (morr) collect=0.55s update=1.61s elapsed=82.5m
+  . rollout 2240 (morr) collect=0.62s update=1.75s elapsed=83.2m
+  . rollout 2260 (morr) collect=0.57s update=1.60s elapsed=84.0m
+  . rollout 2280 (morr) collect=0.59s update=1.64s elapsed=84.7m
+  . rollout 2300 (morr) collect=0.61s update=1.60s elapsed=85.5m
+  [interleaved] total_eps≈15735 | morr=0.37 | visu=0.70 | dyna=0.93 | visu=0.10 | above25=3 | score=8.10 | obj_ent=0.928 | 3.1 ep/s
+  . rollout 2320 (morr) collect=0.64s update=1.67s elapsed=86.4m
+  . rollout 2340 (morr) collect=0.54s update=1.60s elapsed=87.1m
+  . rollout 2360 (morr) collect=0.58s update=1.60s elapsed=87.9m
+  . rollout 2380 (morr) collect=0.49s update=1.61s elapsed=88.6m
+  . rollout 2400 (morr) collect=0.58s update=1.60s elapsed=89.3m
+  . rollout 2420 (morr) collect=0.58s update=1.61s elapsed=90.1m
+  . rollout 2440 (morr) collect=0.57s update=1.61s elapsed=90.8m
+  [interleaved] total_eps≈16719 | morr=0.40 | visu=0.73 | dyna=0.97 | visu=0.07 | above25=3 | score=8.17 | obj_ent=0.910 | 3.1 ep/s
+  . rollout 2460 (morr) collect=0.56s update=1.59s elapsed=91.7m
+  . rollout 2480 (morr) collect=0.57s update=1.61s elapsed=92.4m
+  . rollout 2500 (morr) collect=0.56s update=1.60s elapsed=93.2m
+  . rollout 2520 (morr) collect=0.58s update=1.59s elapsed=93.9m
+  . rollout 2540 (morr) collect=0.58s update=1.59s elapsed=94.6m
+  . rollout 2560 (morr) collect=0.62s update=1.60s elapsed=95.4m
+  . rollout 2580 (morr) collect=0.60s update=1.60s elapsed=96.1m
+  [interleaved] total_eps≈17702 | morr=0.33 | visu=0.57 | dyna=1.00 | visu=0.07 | above25=3 | score=7.97 | obj_ent=0.783 | 3.0 ep/s
+  . rollout 2600 (morr) collect=0.56s update=1.60s elapsed=97.0m
+  . rollout 2620 (morr) collect=0.59s update=1.70s elapsed=97.8m
+  . rollout 2640 (morr) collect=0.58s update=1.59s elapsed=98.5m
+  . rollout 2660 (morr) collect=0.58s update=1.59s elapsed=99.3m
+  . rollout 2680 (morr) collect=0.64s update=1.60s elapsed=100.0m
+  . rollout 2700 (morr) collect=0.58s update=1.60s elapsed=100.7m
+  . rollout 2720 (morr) collect=0.58s update=1.59s elapsed=101.5m
+  [interleaved] total_eps≈18685 | morr=0.27 | visu=0.80 | dyna=0.93 | visu=0.23 | above25=3 | score=8.23 | obj_ent=0.897 | 3.0 ep/s
+  . rollout 2740 (morr) collect=0.56s update=1.60s elapsed=102.4m
+  . rollout 2760 (morr) collect=0.59s update=1.59s elapsed=103.1m
+  . rollout 2780 (morr) collect=0.57s update=1.61s elapsed=103.8m
+  . rollout 2800 (morr) collect=0.56s update=1.62s elapsed=104.6m
+  . rollout 2820 (morr) collect=0.61s update=1.61s elapsed=105.3m
+  . rollout 2840 (morr) collect=0.57s update=1.60s elapsed=106.1m
+  . rollout 2860 (morr) collect=0.61s update=1.60s elapsed=106.8m
+  . rollout 2880 (morr) collect=0.54s update=1.60s elapsed=107.5m
+  [interleaved] total_eps≈19668 | morr=0.37 | visu=0.77 | dyna=0.77 | visu=0.17 | above25=3 | score=8.07 | obj_ent=0.907 | 3.0 ep/s
+  . rollout 2900 (morr) collect=0.61s update=1.60s elapsed=108.4m
+  . rollout 2920 (morr) collect=0.59s update=1.60s elapsed=109.2m
+  [restoring best model: sum=8.30]
+  ✓ augmented on morris_water_maze: success_rate=0.340
+  ✓ augmented on visual_foraging: success_rate=0.730
+  ✓ augmented on dynamic_obstacles: success_rate=0.860
+  ✓ augmented on visual_search: success_rate=0.090
+
+  Interleaved baseline training (shared model)...
+  [baseline-interleaved] total_eps≈990 | morr=0.07 | visu=0.57 | dyna=0.63 | visu=0.10 | above25=2 | score=5.37 | 3.4 ep/s
+  [baseline-interleaved] total_eps≈1973 | morr=0.20 | visu=0.53 | dyna=0.20 | visu=0.07 | above25=1 | score=3.00 | 3.6 ep/s
+  [baseline-interleaved] total_eps≈2956 | morr=0.13 | visu=0.43 | dyna=0.07 | visu=0.03 | above25=1 | score=2.67 | 3.6 ep/s
+  [baseline-interleaved] total_eps≈3939 | morr=0.27 | visu=0.37 | dyna=0.30 | visu=0.07 | above25=3 | score=7.00 | 3.7 ep/s
+  [baseline-interleaved] total_eps≈4922 | morr=0.10 | visu=0.50 | dyna=0.30 | visu=0.07 | above25=2 | score=4.97 | 3.7 ep/s
+  [baseline-interleaved] total_eps≈5905 | morr=0.27 | visu=0.33 | dyna=0.53 | visu=0.03 | above25=3 | score=7.17 | 3.7 ep/s
+  [baseline-interleaved] total_eps≈6888 | morr=0.23 | visu=0.50 | dyna=0.33 | visu=0.07 | above25=2 | score=5.13 | 3.8 ep/s
+  [baseline-interleaved] total_eps≈7871 | morr=0.27 | visu=0.50 | dyna=0.27 | visu=0.07 | above25=3 | score=7.10 | 3.8 ep/s
+  [baseline-interleaved] total_eps≈8854 | morr=0.37 | visu=0.70 | dyna=0.50 | visu=0.00 | above25=3 | score=7.57 | 3.8 ep/s
+  [baseline-interleaved] total_eps≈9837 | morr=0.23 | visu=0.57 | dyna=0.40 | visu=0.03 | above25=2 | score=5.23 | 3.8 ep/s
+  [baseline-interleaved] total_eps≈10820 | morr=0.27 | visu=0.57 | dyna=0.40 | visu=0.00 | above25=3 | score=7.23 | 3.8 ep/s
+  [baseline-interleaved] total_eps≈11803 | morr=0.17 | visu=0.53 | dyna=0.73 | visu=0.00 | above25=2 | score=5.43 | 3.8 ep/s
+  [baseline-interleaved] total_eps≈12786 | morr=0.20 | visu=0.50 | dyna=0.83 | visu=0.07 | above25=2 | score=5.60 | 3.8 ep/s
+  [baseline-interleaved] total_eps≈13769 | morr=0.10 | visu=0.67 | dyna=0.77 | visu=0.10 | above25=2 | score=5.63 | 3.8 ep/s
+  [baseline-interleaved] total_eps≈14752 | morr=0.10 | visu=0.70 | dyna=0.47 | visu=0.10 | above25=2 | score=5.37 | 3.8 ep/s
+  [baseline-interleaved] total_eps≈15735 | morr=0.20 | visu=0.63 | dyna=0.80 | visu=0.10 | above25=2 | score=5.73 | 3.8 ep/s
+  [baseline-interleaved] total_eps≈16719 | morr=0.43 | visu=0.80 | dyna=0.57 | visu=0.07 | above25=3 | score=7.87 | 3.7 ep/s
+  [baseline-interleaved] total_eps≈17702 | morr=0.13 | visu=0.63 | dyna=0.80 | visu=0.03 | above25=2 | score=5.60 | 3.7 ep/s
+  [baseline-interleaved] total_eps≈18685 | morr=0.33 | visu=0.67 | dyna=0.90 | visu=0.10 | above25=3 | score=8.00 | 3.7 ep/s
+  [baseline-interleaved] total_eps≈19668 | morr=0.70 | visu=0.70 | dyna=0.60 | visu=0.07 | above25=3 | score=8.07 | 3.7 ep/s
+  ✓ baseline on morris_water_maze: success_rate=0.690
+  ✓ baseline on visual_foraging: success_rate=0.820
+  ✓ baseline on dynamic_obstacles: success_rate=0.500
+  ✓ baseline on visual_search: success_rate=0.110
+
+======================================================================
+PHASE 2: GENERATING PLOTS
+======================================================================
+  Saved plot: results_main/seed2/comparison_morris_water_maze.png
+  Saved plot: results_main/seed2/comparison_visual_foraging.png
+  Saved plot: results_main/seed2/comparison_dynamic_obstacles.png
+  Saved plot: results_main/seed2/comparison_visual_search.png
+  Saved plot: results_main/seed2/final_comparison.png
+
+======================================================================
+PHASE 3: EVALUATION
+======================================================================
+
+======================================================================
+RUNNING FULL GENERALIZABILITY EVALUATION
+======================================================================
+
+[1/5] Multi-task performance...
+[2/5] Zero-shot transfer...
+[3/5] Few-shot adaptation...
+[4/5] Catastrophic forgetting...
+[5/5] Strategy diversity analysis...
+
+======================================================================
+EVALUATION SUMMARY
+======================================================================
+
+Multi-task average success rate:
+  Augmented (PFC):  0.475
+  Baseline (Fixed): 0.507
+  Delta:            -0.032
+
+Zero-shot transfer (avg across tasks):
+  Augmented: 0.507
+  Baseline:  0.531
+
+Few-shot adaptation on 'morris_water_maze':
+  Augmented: 34 episodes
+  Baseline:  20 episodes
+
+Strategy diversity (augmented model):
+  morris_water_maze: entropy=1.047, dist={'EXPLORE': np.float64(0.4290527531767424), 'APPROACH': np.float64(0.37986137851366963), 'EXPLOIT': np.float64(0.191085868309588)}
+  visual_foraging: entropy=1.037, dist={'EXPLORE': np.float64(0.49141680018310824), 'APPROACH': np.float64(0.20714122224765394), 'EXPLOIT': np.float64(0.3014419775692378)}
+  dynamic_obstacles: entropy=0.703, dist={'EXPLORE': np.float64(0.6814814814814815), 'APPROACH': np.float64(0.2975609756097561), 'EXPLOIT': np.float64(0.020957542908762422)}
+  visual_search: entropy=0.644, dist={'EXPLORE': np.float64(0.7282322837444026), 'APPROACH': np.float64(0.2562726561944701), 'EXPLOIT': np.float64(0.015495060061127301)}
+======================================================================
+  Saved plot: results_main/seed2/strategy_distribution.png
+
+  Saved evaluation report: results_main/seed2/evaluation_report.json
+
+✓ Experiment complete. Results saved to: results_main/seed2

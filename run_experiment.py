@@ -459,12 +459,22 @@ def train_augmented_interleaved(cfg: ExperimentConfig, meta_mode: str = "learned
         task = cfg.tasks[rollout_idx % len(cfg.tasks)]
         trainer = aug_trainers[task]
 
+        t_roll = time.time()
         episode_stats = trainer.collect_rollout()
+        t_mid = time.time()
         update_metrics = trainer.update()
+        t_end = time.time()
         task_episode_counts[task] += eps_per_rollout
 
         for k, v in update_metrics.items():
             task_history[task][k].append(v)
+
+        # Heartbeat. These runs are hours long; without it a slowdown is
+        # indistinguishable from a hang until the next evaluation line lands.
+        if rollout_idx % 20 == 0:
+            print(f"  . rollout {rollout_idx} ({task[:4]}) "
+                  f"collect={t_mid - t_roll:.2f}s update={t_end - t_mid:.2f}s "
+                  f"elapsed={(time.time() - start_time) / 60:.1f}m", flush=True)
 
         # Periodic evaluation (every ~1000 episodes total)
         if rollout_idx % (len(cfg.tasks) * max(1, int(250 / eps_per_rollout))) == 0 and rollout_idx > 0:
@@ -827,7 +837,17 @@ Examples:
                         help="Device: 'cpu', 'cuda', or 'auto'")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--results-dir", type=str, default="results")
+    parser.add_argument("--threads", type=int, default=1,
+                        help="Intra-op CPU threads. Keep at 1 and get parallelism "
+                             "from separate processes: these models are tiny, and "
+                             "OMP_NUM_THREADS alone does not bound the pthreadpool "
+                             "PyTorch uses for the batch-1 convolutions in "
+                             "evaluation, so several workers evaluating at once "
+                             "will each fan out over every core and thrash.")
     args = parser.parse_args()
+
+    # Must be set before any tensor work. Affects speed only, never results.
+    torch.set_num_threads(max(1, args.threads))
 
     # ── Configure ──
     cfg = ExperimentConfig()

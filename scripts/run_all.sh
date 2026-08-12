@@ -7,8 +7,13 @@
 # running jobs in parallel instead.  Set WORKERS to the number of performance
 # cores you can spare.
 #
-#   ./scripts/run_all.sh          # everything, ~100 CPU-hours
-#   WORKERS=4 ./scripts/run_all.sh
+#   ./scripts/run_all.sh                       # everything, ~100 CPU-hours
+#   WORKERS=4 ./scripts/run_all.sh             # leave cores for other work
+#   DEVICE=cuda WORKERS=4 ./scripts/run_all.sh # on the GPU box
+#
+# Budget the memory as well as the cores: each worker holds ~150 MB resident,
+# and on a machine that is already swapping, more workers make the whole queue
+# slower rather than faster.
 #
 # Jobs are ordered by priority: the main learned-vs-baseline comparison first,
 # then the decisive `random` ablation, then the remaining arms.  Completed runs
@@ -18,6 +23,7 @@ set -u
 cd "$(dirname "$0")/.."
 
 WORKERS="${WORKERS:-7}"
+DEVICE="${DEVICE:-cpu}"               # DEVICE=cuda on the GPU box
 EPISODES="${EPISODES:-5000}"          # 5000 per task x 4 tasks = 20,000 per model
 MAIN_SEEDS="${MAIN_SEEDS:-42 7 123 0 1 2 3 4 5 6}"
 SECONDARY_SEEDS="${SECONDARY_SEEDS:-42 7 123 0 1}"
@@ -33,7 +39,7 @@ emit() {  # emit <results-dir> <args...>
   fi
   mkdir -p "$dir"
   # -u so a run in progress can be watched; these jobs take hours each.
-  printf '%s\n' "python3 -u run_experiment.py --episodes $EPISODES --device cpu --results-dir $dir $* > $dir/run.log 2>&1"
+  printf '%s\n' "python3 -u run_experiment.py --episodes $EPISODES --device $DEVICE --results-dir $dir $* > $dir/run.log 2>&1"
 }
 
 # 1. Main comparison: learned meta-controller vs. baseline, 10 seeds.

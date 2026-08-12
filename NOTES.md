@@ -90,10 +90,18 @@ for decisions the model never made.
 
 Hidden state resets on episode boundaries, in training and evaluation both.
 
-The GRU's demonstrated effect is on the mechanism, not on the score: it holds
-selection entropy at ~0.6–1.1 where the feedforward version collapsed. Whether
-it improves task performance is exactly what the `--meta-mode random` ablation
-exists to test.
+The GRU's demonstrated effect is on the mechanism, not on the score: it keeps
+selection entropy off the floor where the feedforward version collapsed
+(0.30–1.08 across task × seed, though the low end is near-collapse). Whether it
+improves task performance is what the `--meta-mode random` ablation was built
+to test, and **the answer is no**: over 10 seeds, `random` is 7.2 pp below
+`learned` with a 95% CI of [-17.8, +3.6], and `uniform-sum` — no selection at
+all — beats `learned` by 15.9 pp [3.6, 29.8].
+
+Keep this in mind before spending effort on the meta-controller. The
+sub-objectives themselves matter (`fixed-exploit` is 24.3 pp worse than
+`learned`, well outside its interval), but nothing so far shows that *learning
+which one to use* beats picking a reasonable one and sticking with it.
 
 ## Parameter parity
 

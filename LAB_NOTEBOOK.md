@@ -252,4 +252,46 @@ Runs are recorded in `results_main/seed<N>/` and
 in `results/`, `results_seed42/`, `results_seed7/` and `results_seed123/` as the
 provenance of the poster.
 
-**Outcome:** see the ablation table in `README.md`.
+**Outcome — the ablation does not support the hypothesis.** Over 10 seeds the
+augmented model still beats the baseline, but by +16.9 pp [3.8, 30.3] rather
+than the +25.9 pp reported from three seeds, winning 31 of 40 task × seed cells
+rather than 12 of 12 and losing the overall comparison on 3 of 10 seeds.
+Per-seed deltas span -14.5 to +50.0 pp, so the seed spread exceeds the effect.
+
+Holding the intrinsic rewards fixed and varying only the selection:
+
+| Arm | Multi-task success | vs. learned (pp) |
+|---|---|---|
+| `learned` (10 seeds) | 0.663 [0.564, 0.763] | -- |
+| `random` (10 seeds) | 0.591 [0.567, 0.614] | -7.2 [-17.8, 3.6] |
+| `fixed-explore` (5) | 0.657 [0.603, 0.703] | -4.7 [-16.7, 7.3] |
+| `fixed-approach` (5) | 0.769 [0.714, 0.825] | 6.6 [-9.9, 23.1] |
+| `fixed-exploit` (5) | 0.461 [0.340, 0.596] | -24.3 [-31.9, -15.7] |
+| `uniform-sum` (5) | 0.863 [0.814, 0.909] | 15.9 [3.6, 29.8] |
+
+Random selection is statistically indistinguishable from the learned
+meta-controller, and `uniform-sum` — which makes no selection and sums all
+three intrinsic rewards — significantly beats it. The gain in the main
+comparison is attributable to the intrinsic rewards, not to learning which
+sub-objective to pursue. `fixed-exploit` being far worse does show the
+sub-objectives are not interchangeable, so the library is doing something; the
+selector is not.
+
+Caveat carried forward: `uniform-sum` receives all three intrinsic rewards each
+step, so its total intrinsic magnitude is 2–3x any single-objective arm's. Its
+advantage may be a magnitude effect. A magnitude-matched version is the
+obvious next run and has not been done.
+
+Two incidental findings from this pass:
+
+- **Threading.** `OMP_NUM_THREADS=1` does not bound the pthreadpool PyTorch
+  uses for the batch-1 convolutions in evaluation. Training runs at batch 16 and
+  took a single-threaded path, so only the periodic in-training evaluation was
+  affected — and because workers run in lockstep they all evaluated at once,
+  each fanning out over every core. An evaluation round costing 12s in isolation
+  took 8 minutes. `torch.set_num_threads()` is now called at startup.
+- **Run-to-run variance on a fixed seed is large.** Re-running seed 7 under the
+  current code moved the baseline from 0.255 to 0.713. Early stopping depends on
+  evaluation results, so the eval-commitment fix changes which checkpoint is
+  restored, and evaluation environments are unseeded. Seeds pin far less here
+  than the original three-seed result assumed.
